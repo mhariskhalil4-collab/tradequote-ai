@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Wrench, LogOut, Building2, User as UserIcon, LayoutDashboard, BookOpen } from 'lucide-react';
+import { Wrench, LogOut, Building2, User as UserIcon, LayoutDashboard, BookOpen, Users } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const { user, workspace, signOut } = useAuth();
@@ -53,6 +53,17 @@ export const Header: React.FC = () => {
               >
                 <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" />
                 <span>Price Book</span>
+              </Link>
+              <Link
+                to="/customers"
+                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                  isCurrent('/customers')
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" />
+                <span>Customers</span>
               </Link>
             </nav>
           )}

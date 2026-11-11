@@ -7,6 +7,7 @@ import { LoginPage } from './pages/LoginPage';
 import { SetupPage } from './pages/SetupPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { PriceBookPage } from './pages/PriceBookPage';
+import { CustomersPage } from './pages/CustomersPage';
 
 export default function App() {
   return (
@@ -61,6 +62,18 @@ export default function App() {
                 <PriceBookPage />
               </ProtectedRoute>
             }
+          />
+          <Route
+            path="/customers"
+            element={
+              <ProtectedRoute>
+                <CustomersPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/customer"
+            element={<Navigate to="/customers" replace />}
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

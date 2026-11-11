@@ -23,10 +23,12 @@ export const DashboardPage: React.FC = () => {
   const { workspace, user } = useAuth();
   const navigate = useNavigate();
   const [priceBookCount, setPriceBookCount] = useState<number>(8);
+  const [customerCount, setCustomerCount] = useState<number>(0);
 
   useEffect(() => {
     if (!workspace?.id) return;
 
+    // Fetch Price Book Count
     supabase
       .from('price_book_items')
       .select('id', { count: 'exact', head: true })
@@ -35,14 +37,28 @@ export const DashboardPage: React.FC = () => {
         if (count !== null && count > 0) {
           setPriceBookCount(count);
         } else {
-          // Defaults to 8 seeded HVAC items
           setPriceBookCount(8);
+        }
+      });
+
+    // Fetch Customers Count
+    supabase
+      .from('customers')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspace.id)
+      .then(({ count }) => {
+        if (count !== null) {
+          setCustomerCount(count);
         }
       });
   }, [workspace?.id]);
 
   const handleNavigatePriceBook = () => {
     navigate('/price-book');
+  };
+
+  const handleNavigateCustomers = () => {
+    navigate('/customers');
   };
 
   return (
@@ -158,13 +174,28 @@ export const DashboardPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center space-x-4">
-            <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center">
-              <Users className="w-5 h-5" />
+          {/* Customers Card */}
+          <div
+            onClick={handleNavigateCustomers}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleNavigateCustomers();
+            }}
+            className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-blue-500 hover:shadow-md transition group flex items-center justify-between cursor-pointer"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition">
+                <Users className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Customers</p>
+                <p className="text-xl font-bold text-gray-900 mt-0.5">{customerCount}</p>
+              </div>
             </div>
-            <div>
-              <p className="text-xs text-gray-500 font-medium">Customers</p>
-              <p className="text-xl font-bold text-gray-900 mt-0.5">0</p>
+            <div className="flex items-center space-x-1 text-xs font-semibold text-purple-600 group-hover:translate-x-0.5 transition">
+              <span>View</span>
+              <ArrowRight className="w-4 h-4 ml-0.5" />
             </div>
           </div>
         </div>
@@ -178,17 +209,25 @@ export const DashboardPage: React.FC = () => {
             Welcome to {workspace?.business_name || 'TradeQuote AI'}
           </h2>
           <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
-            Your {workspace?.trade_type || 'trade'} workspace is set up. Manage your rates, parts and labour in the Price Book, and prepare for upcoming quotes and job scheduling.
+            Your {workspace?.trade_type || 'trade'} workspace is set up. Manage your rates, parts and labour in the Price Book, and organize client details in Customers.
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <button
               type="button"
               onClick={handleNavigatePriceBook}
-              className="inline-flex items-center px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition cursor-pointer"
+              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition cursor-pointer"
             >
               <BookOpen className="w-4 h-4 mr-2" />
               <span>Price Book</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleNavigateCustomers}
+              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm transition cursor-pointer"
+            >
+              <Users className="w-4 h-4 mr-2 text-blue-600" />
+              <span>Customers ({customerCount})</span>
             </button>
           </div>
 
@@ -199,6 +238,13 @@ export const DashboardPage: React.FC = () => {
             >
               <BookOpen className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
               Price Book
+            </Link>
+            <Link
+              to="/customers"
+              className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition shadow-xs"
+            >
+              <Users className="w-3.5 h-3.5 mr-1.5 text-purple-600" />
+              Customers
             </Link>
             <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
               <FileText className="w-3.5 h-3.5 mr-1.5 text-gray-500" />
