@@ -6,6 +6,7 @@ import { SignUpPage } from './pages/SignUpPage';
 import { LoginPage } from './pages/LoginPage';
 import { SetupPage } from './pages/SetupPage';
 import { DashboardPage } from './pages/DashboardPage';
+import { PriceBookPage } from './pages/PriceBookPage';
 
 export default function App() {
   return (
@@ -42,6 +43,14 @@ export default function App() {
             element={
               <ProtectedRoute requireWorkspace>
                 <DashboardPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/price-book"
+            element={
+              <ProtectedRoute requireWorkspace>
+                <PriceBookPage />
               </ProtectedRoute>
             }
           />

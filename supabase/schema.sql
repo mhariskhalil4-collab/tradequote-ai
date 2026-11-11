@@ -420,3 +420,4 @@ CREATE POLICY "Users can delete workspace jobs"
     WHERE workspaces.id = jobs.workspace_id
     AND workspaces.owner_id = auth.uid()
   ));
+

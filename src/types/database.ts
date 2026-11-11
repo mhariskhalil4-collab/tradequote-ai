@@ -1,4 +1,6 @@
 export type TradeType = 'HVAC' | 'Plumbing';
+export type ItemCategory = 'part' | 'labour' | 'service';
+export type ItemUnit = 'each' | 'hour' | 'foot' | 'job';
 
 export interface Workspace {
   id: string;
@@ -17,8 +19,8 @@ export interface PriceBookItem {
   workspace_id: string;
   name: string;
   description: string | null;
-  category: 'part' | 'labour' | 'service';
-  unit: 'each' | 'hour' | 'foot' | 'job';
+  category: ItemCategory;
+  unit: ItemUnit;
   unit_price: number;
   is_active: boolean;
   created_at: string;
@@ -99,3 +101,4 @@ export interface Job {
   notes: string | null;
   created_at: string;
 }
+

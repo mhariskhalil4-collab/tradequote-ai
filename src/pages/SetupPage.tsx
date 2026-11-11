@@ -4,6 +4,7 @@ import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from '../components/Header';
 import type { TradeType } from '../types/database';
+import { seedWorkspacePriceBook } from '../services/priceBookService';
 import { Building2, Loader2, AlertCircle, Flame, Droplets, Check } from 'lucide-react';
 
 const CURRENCIES = [
@@ -57,14 +58,18 @@ export const SetupPage: React.FC = () => {
     setLoading(true);
 
     try {
-      const { error: insertError } = await supabase.from('workspaces').insert({
-        owner_id: user.id,
-        business_name: businessName.trim(),
-        trade_type: tradeType,
-        phone: phone.trim() || null,
-        email: email.trim() || null,
-        currency,
-      });
+      const { data: newWorkspace, error: insertError } = await supabase
+        .from('workspaces')
+        .insert({
+          owner_id: user.id,
+          business_name: businessName.trim(),
+          trade_type: tradeType,
+          phone: phone.trim() || null,
+          email: email.trim() || null,
+          currency,
+        })
+        .select()
+        .single();
 
       if (insertError) {
         if (insertError.code === 'PGRST205' || insertError.message.includes('schema cache')) {
@@ -76,6 +81,15 @@ export const SetupPage: React.FC = () => {
         }
         setLoading(false);
         return;
+      }
+
+      // Automatically seed the price book with 8 sample HVAC items for the new workspace
+      if (newWorkspace?.id) {
+        try {
+          await seedWorkspacePriceBook(newWorkspace.id);
+        } catch (seedErr) {
+          console.warn('Initial seed note:', seedErr);
+        }
       }
 
       await refreshWorkspace();
@@ -283,3 +297,4 @@ export const SetupPage: React.FC = () => {
     </div>
   );
 };
+
