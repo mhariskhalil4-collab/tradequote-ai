@@ -8,6 +8,8 @@ import { SetupPage } from './pages/SetupPage';
 import { DashboardPage } from './pages/DashboardPage';
 import { PriceBookPage } from './pages/PriceBookPage';
 import { CustomersPage } from './pages/CustomersPage';
+import { QuotesPage } from './pages/QuotesPage';
+import { NewQuotePage } from './pages/NewQuotePage';
 
 export default function App() {
   return (
@@ -74,6 +76,34 @@ export default function App() {
           <Route
             path="/customer"
             element={<Navigate to="/customers" replace />}
+          />
+          <Route
+            path="/quotes"
+            element={
+              <ProtectedRoute>
+                <QuotesPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/quotes/new"
+            element={
+              <ProtectedRoute>
+                <NewQuotePage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/quote/new"
+            element={<Navigate to="/quotes/new" replace />}
+          />
+          <Route
+            path="/new-quote"
+            element={<Navigate to="/quotes/new" replace />}
+          />
+          <Route
+            path="/quote"
+            element={<Navigate to="/quotes" replace />}
           />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>

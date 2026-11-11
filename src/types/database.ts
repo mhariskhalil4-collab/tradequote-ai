@@ -56,6 +56,12 @@ export interface Quote {
   updated_at: string;
 }
 
+export interface QuoteWithCustomer extends Quote {
+  customer?: Customer | null;
+  customers?: Customer | null;
+  quote_line_items?: QuoteLineItem[];
+}
+
 export interface QuoteLineItem {
   id: string;
   quote_id: string;

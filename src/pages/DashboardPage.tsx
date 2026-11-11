@@ -8,7 +8,6 @@ import {
   FileText,
   BookOpen,
   Receipt,
-  Briefcase,
   Users,
   Flame,
   Droplets,
@@ -17,12 +16,15 @@ import {
   Mail,
   Calendar,
   ArrowRight,
+  Plus,
+  Sparkles,
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
   const { workspace, user } = useAuth();
   const [priceBookCount, setPriceBookCount] = useState<number>(8);
   const [customerCount, setCustomerCount] = useState<number>(0);
+  const [quoteCount, setQuoteCount] = useState<number>(0);
 
   useEffect(() => {
     if (!workspace?.id) return;
@@ -48,6 +50,17 @@ export const DashboardPage: React.FC = () => {
       .then(({ count }) => {
         if (count !== null) {
           setCustomerCount(count);
+        }
+      });
+
+    // Fetch Quotes Count
+    supabase
+      .from('quotes')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspace.id)
+      .then(({ count }) => {
+        if (count !== null) {
+          setQuoteCount(count);
         }
       });
   }, [workspace?.id]);
@@ -89,6 +102,22 @@ export const DashboardPage: React.FC = () => {
             {/* Quick Actions & Meta */}
             <div className="flex flex-wrap items-center gap-2.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
               <Link
+                to="/quotes/new"
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm transition"
+                title="Draft New Quote with AI"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                <span>New Quote</span>
+              </Link>
+              <Link
+                to="/quotes"
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition"
+                title="Go to Quotes"
+              >
+                <FileText className="w-3.5 h-3.5" />
+                <span>Quotes</span>
+              </Link>
+              <Link
                 to="/price-book"
                 className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition"
                 title="Go to Price Book"
@@ -127,6 +156,26 @@ export const DashboardPage: React.FC = () => {
 
         {/* Overview Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+          {/* Quotes Card */}
+          <Link
+            to="/quotes"
+            className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-emerald-500 hover:shadow-md transition group flex items-center justify-between cursor-pointer"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center group-hover:bg-emerald-600 group-hover:text-white transition">
+                <FileText className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Quotes</p>
+                <p className="text-xl font-bold text-gray-900 mt-0.5">{quoteCount}</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-1 text-xs font-semibold text-emerald-600 group-hover:translate-x-0.5 transition">
+              <span>View</span>
+              <ArrowRight className="w-4 h-4 ml-0.5" />
+            </div>
+          </Link>
+
           {/* Price Book Card */}
           <Link
             to="/price-book"
@@ -147,26 +196,6 @@ export const DashboardPage: React.FC = () => {
             </div>
           </Link>
 
-          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center space-x-4">
-            <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
-              <Receipt className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 font-medium">Invoices</p>
-              <p className="text-xl font-bold text-gray-900 mt-0.5">0</p>
-            </div>
-          </div>
-
-          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center space-x-4">
-            <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center">
-              <Briefcase className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 font-medium">Scheduled Jobs</p>
-              <p className="text-xl font-bold text-gray-900 mt-0.5">0</p>
-            </div>
-          </div>
-
           {/* Customers Card */}
           <Link
             to="/customers"
@@ -186,6 +215,17 @@ export const DashboardPage: React.FC = () => {
               <ArrowRight className="w-4 h-4 ml-0.5" />
             </div>
           </Link>
+
+          {/* Invoices Card */}
+          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center space-x-4">
+            <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
+              <Receipt className="w-5 h-5" />
+            </div>
+            <div>
+              <p className="text-xs text-gray-500 font-medium">Invoices</p>
+              <p className="text-xl font-bold text-gray-900 mt-0.5">0</p>
+            </div>
+          </div>
         </div>
 
         {/* Dashboard Actions / Modules State */}
@@ -197,15 +237,29 @@ export const DashboardPage: React.FC = () => {
             Welcome to {workspace?.business_name || 'TradeQuote AI'}
           </h2>
           <p className="mt-2 text-sm text-gray-500 max-w-md mx-auto">
-            Your {workspace?.trade_type || 'trade'} workspace is set up. Manage your rates, parts and labour in the Price Book, and organize client details in Customers.
+            Your {workspace?.trade_type || 'trade'} workspace is set up. Draft AI-powered quotes with line items from your Price Book, track approvals, and manage client details.
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link
-              to="/price-book"
-              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition"
+              to="/quotes/new"
+              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition"
             >
-              <BookOpen className="w-4 h-4 mr-2" />
+              <Sparkles className="w-4 h-4 mr-2" />
+              <span>Draft New Quote</span>
+            </Link>
+            <Link
+              to="/quotes"
+              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm transition"
+            >
+              <FileText className="w-4 h-4 mr-2 text-emerald-600" />
+              <span>Quotes ({quoteCount})</span>
+            </Link>
+            <Link
+              to="/price-book"
+              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm transition"
+            >
+              <BookOpen className="w-4 h-4 mr-2 text-blue-600" />
               <span>Price Book</span>
             </Link>
             <Link
@@ -218,6 +272,20 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           <div className="mt-8 pt-8 border-t border-gray-100 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/quotes"
+              className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition shadow-xs"
+            >
+              <FileText className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
+              Quotes ({quoteCount})
+            </Link>
+            <Link
+              to="/quotes/new"
+              className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition shadow-xs"
+            >
+              <Plus className="w-3.5 h-3.5 mr-1.5 text-indigo-600" />
+              New Quote
+            </Link>
             <Link
               to="/price-book"
               className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition shadow-xs"
@@ -232,10 +300,6 @@ export const DashboardPage: React.FC = () => {
               <Users className="w-3.5 h-3.5 mr-1.5 text-purple-600" />
               Customers
             </Link>
-            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
-              <FileText className="w-3.5 h-3.5 mr-1.5 text-gray-500" />
-              Quotes
-            </span>
             <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
               <Receipt className="w-3.5 h-3.5 mr-1.5 text-gray-500" />
               Invoices
