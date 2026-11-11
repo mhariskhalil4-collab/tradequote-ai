@@ -50,7 +50,10 @@ export const NewQuotePage: React.FC = () => {
   const [aiNotice, setAiNotice] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!workspace?.id) return;
+    if (!workspace?.id) {
+      setLoading(false);
+      return;
+    }
 
     const loadInitialData = async () => {
       setLoading(true);
@@ -271,7 +274,8 @@ export const NewQuotePage: React.FC = () => {
           <div className="flex items-center space-x-3">
             <Link
               to="/quotes"
-              className="p-2 rounded-xl bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition shadow-xs"
+              onClick={() => navigate('/quotes')}
+              className="p-2 rounded-xl bg-white border border-gray-200 text-gray-600 hover:text-gray-900 hover:bg-gray-100 transition shadow-xs cursor-pointer"
               title="Back to Quotes"
             >
               <ArrowLeft className="w-5 h-5" />
@@ -294,7 +298,8 @@ export const NewQuotePage: React.FC = () => {
           <div className="flex items-center space-x-3">
             <Link
               to="/quotes"
-              className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition shadow-xs"
+              onClick={() => navigate('/quotes')}
+              className="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition shadow-xs cursor-pointer"
             >
               Cancel
             </Link>
@@ -678,7 +683,8 @@ export const NewQuotePage: React.FC = () => {
             <div className="flex items-center justify-end space-x-3 pt-2">
               <Link
                 to="/quotes"
-                className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition shadow-xs"
+                onClick={() => navigate('/quotes')}
+                className="px-5 py-2.5 rounded-xl text-xs sm:text-sm font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 transition shadow-xs cursor-pointer"
               >
                 Cancel
               </Link>

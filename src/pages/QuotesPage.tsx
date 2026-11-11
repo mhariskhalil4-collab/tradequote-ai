@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from '../components/Header';
 import {
@@ -29,6 +29,7 @@ import {
 export const QuotesPage: React.FC = () => {
   const { workspace } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   const [quotes, setQuotes] = useState<QuoteWithCustomer[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
@@ -49,7 +50,10 @@ export const QuotesPage: React.FC = () => {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
 
   const loadQuotes = async () => {
-    if (!workspace?.id) return;
+    if (!workspace?.id) {
+      setLoading(false);
+      return;
+    }
     setLoading(true);
     try {
       const { data, error } = await fetchQuotes(workspace.id);
@@ -225,7 +229,8 @@ export const QuotesPage: React.FC = () => {
           <div className="flex items-center space-x-3">
             <Link
               to="/quotes/new"
-              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm hover:shadow transition"
+              onClick={() => navigate('/quotes/new')}
+              className="inline-flex items-center space-x-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm hover:shadow transition cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>New Quote</span>
@@ -352,7 +357,8 @@ export const QuotesPage: React.FC = () => {
             <div className="mt-6">
               <Link
                 to="/quotes/new"
-                className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition"
+                onClick={() => navigate('/quotes/new')}
+                className="inline-flex items-center space-x-2 px-5 py-2.5 rounded-xl text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition cursor-pointer"
               >
                 <Sparkles className="w-4 h-4" />
                 <span>Create First Quote (TQ-1001)</span>

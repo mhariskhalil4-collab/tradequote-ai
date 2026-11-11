@@ -52,7 +52,7 @@ export default function App() {
           <Route
             path="/price-book"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireWorkspace>
                 <PriceBookPage />
               </ProtectedRoute>
             }
@@ -60,7 +60,7 @@ export default function App() {
           <Route
             path="/pricebook"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireWorkspace>
                 <PriceBookPage />
               </ProtectedRoute>
             }
@@ -68,7 +68,7 @@ export default function App() {
           <Route
             path="/customers"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireWorkspace>
                 <CustomersPage />
               </ProtectedRoute>
             }
@@ -80,7 +80,7 @@ export default function App() {
           <Route
             path="/quotes"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireWorkspace>
                 <QuotesPage />
               </ProtectedRoute>
             }
@@ -88,7 +88,7 @@ export default function App() {
           <Route
             path="/quotes/new"
             element={
-              <ProtectedRoute>
+              <ProtectedRoute requireWorkspace>
                 <NewQuotePage />
               </ProtectedRoute>
             }

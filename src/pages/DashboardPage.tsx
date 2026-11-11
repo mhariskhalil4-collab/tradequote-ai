@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from '../components/Header';
 import { supabase } from '../lib/supabase';
@@ -7,14 +7,12 @@ import {
   Building2,
   FileText,
   BookOpen,
-  Receipt,
   Users,
   Flame,
   Droplets,
   DollarSign,
   Phone,
   Mail,
-  Calendar,
   ArrowRight,
   Plus,
   Sparkles,
@@ -22,6 +20,7 @@ import {
 
 export const DashboardPage: React.FC = () => {
   const { workspace, user } = useAuth();
+  const navigate = useNavigate();
   const [priceBookCount, setPriceBookCount] = useState<number>(8);
   const [customerCount, setCustomerCount] = useState<number>(0);
   const [quoteCount, setQuoteCount] = useState<number>(0);
@@ -103,7 +102,8 @@ export const DashboardPage: React.FC = () => {
             <div className="flex flex-wrap items-center gap-2.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
               <Link
                 to="/quotes/new"
-                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm transition"
+                onClick={() => navigate('/quotes/new')}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white rounded-xl text-xs font-bold shadow-sm transition cursor-pointer"
                 title="Draft New Quote with AI"
               >
                 <Sparkles className="w-3.5 h-3.5" />
@@ -111,7 +111,8 @@ export const DashboardPage: React.FC = () => {
               </Link>
               <Link
                 to="/quotes"
-                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition"
+                onClick={() => navigate('/quotes')}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl text-xs font-semibold shadow-sm transition cursor-pointer"
                 title="Go to Quotes"
               >
                 <FileText className="w-3.5 h-3.5" />
@@ -119,7 +120,8 @@ export const DashboardPage: React.FC = () => {
               </Link>
               <Link
                 to="/price-book"
-                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition"
+                onClick={() => navigate('/price-book')}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition cursor-pointer"
                 title="Go to Price Book"
               >
                 <BookOpen className="w-3.5 h-3.5" />
@@ -127,7 +129,8 @@ export const DashboardPage: React.FC = () => {
               </Link>
               <Link
                 to="/customers"
-                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-sm transition"
+                onClick={() => navigate('/customers')}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-sm transition cursor-pointer"
                 title="Go to Customers"
               >
                 <Users className="w-3.5 h-3.5" />
@@ -154,11 +157,12 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Overview Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {/* Overview Active Modules: 3 Active Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
           {/* Quotes Card */}
           <Link
             to="/quotes"
+            onClick={() => navigate('/quotes')}
             className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-emerald-500 hover:shadow-md transition group flex items-center justify-between cursor-pointer"
           >
             <div className="flex items-center space-x-4">
@@ -179,6 +183,7 @@ export const DashboardPage: React.FC = () => {
           {/* Price Book Card */}
           <Link
             to="/price-book"
+            onClick={() => navigate('/price-book')}
             className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-blue-500 hover:shadow-md transition group flex items-center justify-between cursor-pointer"
           >
             <div className="flex items-center space-x-4">
@@ -199,6 +204,7 @@ export const DashboardPage: React.FC = () => {
           {/* Customers Card */}
           <Link
             to="/customers"
+            onClick={() => navigate('/customers')}
             className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-purple-500 hover:shadow-md transition group flex items-center justify-between cursor-pointer"
           >
             <div className="flex items-center space-x-4">
@@ -215,17 +221,6 @@ export const DashboardPage: React.FC = () => {
               <ArrowRight className="w-4 h-4 ml-0.5" />
             </div>
           </Link>
-
-          {/* Invoices Card */}
-          <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center space-x-4">
-            <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center">
-              <Receipt className="w-5 h-5" />
-            </div>
-            <div>
-              <p className="text-xs text-gray-500 font-medium">Invoices</p>
-              <p className="text-xl font-bold text-gray-900 mt-0.5">0</p>
-            </div>
-          </div>
         </div>
 
         {/* Dashboard Actions / Modules State */}
@@ -243,28 +238,32 @@ export const DashboardPage: React.FC = () => {
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/quotes/new"
-              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition"
+              onClick={() => navigate('/quotes/new')}
+              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-bold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition cursor-pointer"
             >
               <Sparkles className="w-4 h-4 mr-2" />
               <span>Draft New Quote</span>
             </Link>
             <Link
               to="/quotes"
-              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm transition"
+              onClick={() => navigate('/quotes')}
+              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm transition cursor-pointer"
             >
               <FileText className="w-4 h-4 mr-2 text-emerald-600" />
               <span>Quotes ({quoteCount})</span>
             </Link>
             <Link
               to="/price-book"
-              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm transition"
+              onClick={() => navigate('/price-book')}
+              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm transition cursor-pointer"
             >
               <BookOpen className="w-4 h-4 mr-2 text-blue-600" />
               <span>Price Book</span>
             </Link>
             <Link
               to="/customers"
-              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm transition"
+              onClick={() => navigate('/customers')}
+              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm transition cursor-pointer"
             >
               <Users className="w-4 h-4 mr-2 text-purple-600" />
               <span>Customers ({customerCount})</span>
@@ -274,40 +273,36 @@ export const DashboardPage: React.FC = () => {
           <div className="mt-8 pt-8 border-t border-gray-100 flex flex-wrap items-center justify-center gap-3">
             <Link
               to="/quotes"
-              className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition shadow-xs"
+              onClick={() => navigate('/quotes')}
+              className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition shadow-xs cursor-pointer"
             >
               <FileText className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
               Quotes ({quoteCount})
             </Link>
             <Link
               to="/quotes/new"
-              className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition shadow-xs"
+              onClick={() => navigate('/quotes/new')}
+              className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition shadow-xs cursor-pointer"
             >
               <Plus className="w-3.5 h-3.5 mr-1.5 text-indigo-600" />
               New Quote
             </Link>
             <Link
               to="/price-book"
-              className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition shadow-xs"
+              onClick={() => navigate('/price-book')}
+              className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition shadow-xs cursor-pointer"
             >
               <BookOpen className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
               Price Book
             </Link>
             <Link
               to="/customers"
-              className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition shadow-xs"
+              onClick={() => navigate('/customers')}
+              className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-purple-50 text-purple-700 border border-purple-200 hover:bg-purple-100 transition shadow-xs cursor-pointer"
             >
               <Users className="w-3.5 h-3.5 mr-1.5 text-purple-600" />
               Customers
             </Link>
-            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
-              <Receipt className="w-3.5 h-3.5 mr-1.5 text-gray-500" />
-              Invoices
-            </span>
-            <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
-              <Calendar className="w-3.5 h-3.5 mr-1.5 text-gray-500" />
-              Jobs
-            </span>
           </div>
         </div>
       </main>

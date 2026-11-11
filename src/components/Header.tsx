@@ -34,7 +34,8 @@ export const Header: React.FC = () => {
             <nav className="flex items-center space-x-1 sm:space-x-2">
               <Link
                 to="/dashboard"
-                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                onClick={() => navigate('/dashboard')}
+                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                   isCurrent('/dashboard')
                     ? 'bg-blue-50 text-blue-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -45,7 +46,8 @@ export const Header: React.FC = () => {
               </Link>
               <Link
                 to="/price-book"
-                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                onClick={() => navigate('/price-book')}
+                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                   isCurrent('/price-book')
                     ? 'bg-blue-50 text-blue-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -56,7 +58,8 @@ export const Header: React.FC = () => {
               </Link>
               <Link
                 to="/customers"
-                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                onClick={() => navigate('/customers')}
+                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                   isCurrent('/customers')
                     ? 'bg-blue-50 text-blue-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
@@ -67,7 +70,8 @@ export const Header: React.FC = () => {
               </Link>
               <Link
                 to="/quotes"
-                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                onClick={() => navigate('/quotes')}
+                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
                   location.pathname.startsWith('/quote')
                     ? 'bg-blue-50 text-blue-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
