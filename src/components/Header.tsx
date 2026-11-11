@@ -30,8 +30,8 @@ export const Header: React.FC = () => {
             <span className="text-xl font-bold tracking-tight">TradeQuote AI</span>
           </Link>
 
-          {user && workspace && (
-            <nav className="flex items-center space-x-1">
+          {user && (
+            <nav className="flex items-center space-x-1 sm:space-x-2">
               <Link
                 to="/dashboard"
                 className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
@@ -40,8 +40,8 @@ export const Header: React.FC = () => {
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
               >
-                <LayoutDashboard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
-                <span className="hidden sm:inline">Dashboard</span>
+                <LayoutDashboard className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-500" />
+                <span>Dashboard</span>
               </Link>
               <Link
                 to="/price-book"
@@ -62,7 +62,7 @@ export const Header: React.FC = () => {
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
               >
-                <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" />
+                <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600" />
                 <span>Customers</span>
               </Link>
             </nav>

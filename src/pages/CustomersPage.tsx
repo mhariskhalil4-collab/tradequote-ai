@@ -10,6 +10,7 @@ import {
   updateCustomer,
   deleteCustomer,
   seedSampleCustomers,
+  SAMPLE_CUSTOMERS,
   type CustomerStats,
 } from '../services/customerService';
 import {
@@ -100,22 +101,48 @@ export const CustomersPage: React.FC = () => {
     }
 
     if (activeWorkspaceId) {
-      // Fetch customers and quote statistics in parallel
-      const [custRes, statsRes] = await Promise.all([
-        fetchCustomers(activeWorkspaceId),
-        fetchCustomerQuoteStats(activeWorkspaceId),
-      ]);
+      // Fetch customers and quote statistics from Supabase
+      let { data: custData, error: custErr } = await fetchCustomers(activeWorkspaceId);
 
-      if (custRes.error) {
-        setError(custRes.error);
-        setCustomers([]);
-      } else {
-        setCustomers(custRes.data || []);
+      // If price book / customers are empty in Supabase, auto-seed sample customers into Supabase
+      if (!custErr && (!custData || custData.length === 0)) {
+        try {
+          await seedSampleCustomers(activeWorkspaceId);
+          const reloaded = await fetchCustomers(activeWorkspaceId);
+          custData = reloaded.data;
+          custErr = reloaded.error;
+        } catch (seedErr) {
+          console.warn('Auto-seed customers error:', seedErr);
+        }
       }
 
+      if (custErr) {
+        setError(custErr);
+        // Fallback display
+        setCustomers(
+          SAMPLE_CUSTOMERS.map((c, idx) => ({
+            ...c,
+            id: `seed-cust-${idx + 1}`,
+            workspace_id: activeWorkspaceId,
+            created_at: new Date().toISOString(),
+          }))
+        );
+      } else {
+        setCustomers(custData || []);
+      }
+
+      const statsRes = await fetchCustomerQuoteStats(activeWorkspaceId);
       setQuoteStats(statsRes.stats || {});
     } else {
-      setCustomers([]);
+      // Fallback if no workspace is active yet
+      setCustomers(
+        SAMPLE_CUSTOMERS.map((c, idx) => ({
+          ...c,
+          id: `sample-${idx + 1}`,
+          workspace_id: 'default',
+          created_at: new Date().toISOString(),
+        }))
+      );
     }
 
     setLoading(false);

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from '../components/Header';
 import { supabase } from '../lib/supabase';
@@ -21,7 +21,6 @@ import {
 
 export const DashboardPage: React.FC = () => {
   const { workspace, user } = useAuth();
-  const navigate = useNavigate();
   const [priceBookCount, setPriceBookCount] = useState<number>(8);
   const [customerCount, setCustomerCount] = useState<number>(0);
 
@@ -52,14 +51,6 @@ export const DashboardPage: React.FC = () => {
         }
       });
   }, [workspace?.id]);
-
-  const handleNavigatePriceBook = () => {
-    navigate('/price-book');
-  };
-
-  const handleNavigateCustomers = () => {
-    navigate('/customers');
-  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -96,16 +87,23 @@ export const DashboardPage: React.FC = () => {
             </div>
 
             {/* Quick Actions & Meta */}
-            <div className="flex flex-wrap items-center gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
-              <button
-                type="button"
-                onClick={handleNavigatePriceBook}
-                className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition cursor-pointer"
+            <div className="flex flex-wrap items-center gap-2.5 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+              <Link
+                to="/price-book"
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition"
                 title="Go to Price Book"
               >
-                <BookOpen className="w-4 h-4" />
+                <BookOpen className="w-3.5 h-3.5" />
                 <span>Price Book</span>
-              </button>
+              </Link>
+              <Link
+                to="/customers"
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-xl text-xs font-semibold shadow-sm transition"
+                title="Go to Customers"
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>Customers</span>
+              </Link>
 
               <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200 text-xs text-gray-600">
                 <DollarSign className="w-3.5 h-3.5 text-gray-500" />
@@ -130,13 +128,8 @@ export const DashboardPage: React.FC = () => {
         {/* Overview Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {/* Price Book Card */}
-          <div
-            onClick={handleNavigatePriceBook}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleNavigatePriceBook();
-            }}
+          <Link
+            to="/price-book"
             className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-blue-500 hover:shadow-md transition group flex items-center justify-between cursor-pointer"
           >
             <div className="flex items-center space-x-4">
@@ -152,7 +145,7 @@ export const DashboardPage: React.FC = () => {
               <span>View</span>
               <ArrowRight className="w-4 h-4 ml-0.5" />
             </div>
-          </div>
+          </Link>
 
           <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center space-x-4">
             <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -175,14 +168,9 @@ export const DashboardPage: React.FC = () => {
           </div>
 
           {/* Customers Card */}
-          <div
-            onClick={handleNavigateCustomers}
-            role="button"
-            tabIndex={0}
-            onKeyDown={(e) => {
-              if (e.key === 'Enter') handleNavigateCustomers();
-            }}
-            className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-blue-500 hover:shadow-md transition group flex items-center justify-between cursor-pointer"
+          <Link
+            to="/customers"
+            className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-purple-500 hover:shadow-md transition group flex items-center justify-between cursor-pointer"
           >
             <div className="flex items-center space-x-4">
               <div className="w-10 h-10 rounded-lg bg-purple-50 text-purple-600 flex items-center justify-center group-hover:bg-purple-600 group-hover:text-white transition">
@@ -197,7 +185,7 @@ export const DashboardPage: React.FC = () => {
               <span>View</span>
               <ArrowRight className="w-4 h-4 ml-0.5" />
             </div>
-          </div>
+          </Link>
         </div>
 
         {/* Dashboard Actions / Modules State */}
@@ -213,22 +201,20 @@ export const DashboardPage: React.FC = () => {
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <button
-              type="button"
-              onClick={handleNavigatePriceBook}
-              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition cursor-pointer"
+            <Link
+              to="/price-book"
+              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition"
             >
               <BookOpen className="w-4 h-4 mr-2" />
               <span>Price Book</span>
-            </button>
-            <button
-              type="button"
-              onClick={handleNavigateCustomers}
-              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm transition cursor-pointer"
+            </Link>
+            <Link
+              to="/customers"
+              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm transition"
             >
-              <Users className="w-4 h-4 mr-2 text-blue-600" />
+              <Users className="w-4 h-4 mr-2 text-purple-600" />
               <span>Customers ({customerCount})</span>
-            </button>
+            </Link>
           </div>
 
           <div className="mt-8 pt-8 border-t border-gray-100 flex flex-wrap items-center justify-center gap-3">
