@@ -1,6 +1,7 @@
 // Supabase Edge Function: public-quote
 // Serves public quote estimates to customers via share_token without requiring authentication.
 // Also processes customer Accept and Decline actions.
+// Uses SUPABASE_SERVICE_ROLE_KEY to bypass Row Level Security server-side (never exposed to browser).
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 
@@ -17,24 +18,25 @@ Deno.serve(async (req: Request) => {
   }
 
   try {
-    const supabaseUrl =
-      Deno.env.get('SUPABASE_URL') ||
-      Deno.env.get('VITE_SUPABASE_URL') ||
-      '';
-    const supabaseServiceKey =
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ||
-      Deno.env.get('SUPABASE_ANON_KEY') ||
-      Deno.env.get('VITE_SUPABASE_ANON_KEY') ||
-      '';
+    const supabaseUrl = Deno.env.get('SUPABASE_URL') || Deno.env.get('VITE_SUPABASE_URL') || '';
+    // Service role key is server-side ONLY, never in the browser
+    const serviceRoleKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') || '';
 
-    if (!supabaseUrl || !supabaseServiceKey) {
+    if (!supabaseUrl || !serviceRoleKey) {
+      console.error('Missing SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY in edge function environment');
       return new Response(
-        JSON.stringify({ error: 'Supabase environment configuration missing in Edge Function' }),
-        { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+        JSON.stringify({ error: 'Quote not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
-    const supabase = createClient(supabaseUrl, supabaseServiceKey);
+    // Create Supabase client strictly with the SERVICE ROLE key to bypass RLS server-side
+    const supabase = createClient(supabaseUrl, serviceRoleKey, {
+      auth: {
+        persistSession: false,
+        autoRefreshToken: false,
+      },
+    });
 
     // Extract token & action from GET params or POST body
     let token = '';
@@ -52,24 +54,34 @@ Deno.serve(async (req: Request) => {
 
     if (!token || token.trim().length === 0) {
       return new Response(
-        JSON.stringify({ error: 'A valid share_token is required.' }),
-        { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-      );
-    }
-
-    // 2. Fetch Quote by share_token
-    const { data: quote, error: quoteError } = await supabase
-      .from('quotes')
-      .select('*, customers(name, phone, email, address), workspaces(business_name, trade_type, phone, email, currency)')
-      .eq('share_token', token.trim())
-      .maybeSingle();
-
-    if (quoteError || !quote) {
-      return new Response(
-        JSON.stringify({ error: 'Quote not found or invalid share token.' }),
+        JSON.stringify({ error: 'Quote not found' }),
         { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
+
+    // 2. Fetch Quote by share_token using SERVICE ROLE key (uses .limit(1) to prevent .single() errors)
+    const { data: quotesList, error: quoteError } = await supabase
+      .from('quotes')
+      .select('*, customers(name, phone, email, address), workspaces(business_name, trade_type, phone, email, currency)')
+      .eq('share_token', token.trim())
+      .limit(1);
+
+    if (quoteError) {
+      console.error('Database query error in public-quote:', quoteError.message);
+      return new Response(
+        JSON.stringify({ error: 'Quote not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    if (!quotesList || quotesList.length === 0) {
+      return new Response(
+        JSON.stringify({ error: 'Quote not found' }),
+        { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      );
+    }
+
+    const quote = quotesList[0];
 
     // Check expiration status
     const isExpired = quote.expires_at ? new Date(quote.expires_at) < new Date() : false;
@@ -84,7 +96,7 @@ Deno.serve(async (req: Request) => {
       }
 
       const newStatus = action === 'accept' ? 'accepted' : 'declined';
-      const { data: updatedQuote, error: updateError } = await supabase
+      const { data: updatedQuotes, error: updateError } = await supabase
         .from('quotes')
         .update({
           status: newStatus,
@@ -92,11 +104,11 @@ Deno.serve(async (req: Request) => {
         })
         .eq('id', quote.id)
         .select()
-        .single();
+        .limit(1);
 
-      if (updateError) {
+      if (updateError || !updatedQuotes || updatedQuotes.length === 0) {
         return new Response(
-          JSON.stringify({ error: `Failed to ${action} quote: ${updateError.message}` }),
+          JSON.stringify({ error: `Failed to ${action} quote` }),
           { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -106,22 +118,18 @@ Deno.serve(async (req: Request) => {
           success: true,
           status: newStatus,
           message: `Quote successfully ${newStatus}.`,
-          quote: updatedQuote,
+          quote: updatedQuotes[0],
         }),
         { status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       );
     }
 
     // 4. Fetch line items for the quote
-    const { data: lineItems, error: itemsError } = await supabase
+    const { data: lineItems } = await supabase
       .from('quote_line_items')
       .select('*')
       .eq('quote_id', quote.id)
       .order('id', { ascending: true });
-
-    if (itemsError) {
-      console.warn('Error fetching quote line items:', itemsError.message);
-    }
 
     // Return sanitized public quote view
     const responsePayload = {
@@ -129,9 +137,9 @@ Deno.serve(async (req: Request) => {
       quote_number: quote.quote_number,
       title: quote.title,
       status: quote.status,
-      subtotal: quote.subtotal,
-      tax_percent: quote.tax_percent,
-      total: quote.total,
+      subtotal: Number(quote.subtotal) || 0,
+      tax_percent: Number(quote.tax_percent) || 0,
+      total: Number(quote.total) || 0,
       notes: quote.notes,
       expires_at: quote.expires_at,
       created_at: quote.created_at,
@@ -146,11 +154,10 @@ Deno.serve(async (req: Request) => {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
     });
   } catch (err: unknown) {
-    const msg = err instanceof Error ? err.message : 'Unknown server error';
-    console.error('public-quote error:', msg);
+    console.error('public-quote error:', err);
     return new Response(
-      JSON.stringify({ error: 'Internal server error loading public quote', details: msg }),
-      { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+      JSON.stringify({ error: 'Quote not found' }),
+      { status: 404, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
     );
   }
 });
