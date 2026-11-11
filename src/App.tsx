@@ -49,7 +49,15 @@ export default function App() {
           <Route
             path="/price-book"
             element={
-              <ProtectedRoute requireWorkspace>
+              <ProtectedRoute>
+                <PriceBookPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/pricebook"
+            element={
+              <ProtectedRoute>
                 <PriceBookPage />
               </ProtectedRoute>
             }

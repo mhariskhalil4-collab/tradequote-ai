@@ -31,27 +31,27 @@ export const Header: React.FC = () => {
           </Link>
 
           {user && workspace && (
-            <nav className="hidden md:flex items-center space-x-1">
+            <nav className="flex items-center space-x-1">
               <Link
                 to="/dashboard"
-                className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                   isCurrent('/dashboard')
                     ? 'bg-blue-50 text-blue-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
               >
-                <LayoutDashboard className="w-4 h-4" />
-                <span>Dashboard</span>
+                <LayoutDashboard className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+                <span className="hidden sm:inline">Dashboard</span>
               </Link>
               <Link
                 to="/price-book"
-                className={`inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
+                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition ${
                   isCurrent('/price-book')
                     ? 'bg-blue-50 text-blue-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
               >
-                <BookOpen className="w-4 h-4" />
+                <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" />
                 <span>Price Book</span>
               </Link>
             </nav>

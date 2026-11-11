@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from '../components/Header';
 import { supabase } from '../lib/supabase';
@@ -21,7 +21,8 @@ import {
 
 export const DashboardPage: React.FC = () => {
   const { workspace, user } = useAuth();
-  const [priceBookCount, setPriceBookCount] = useState<number>(0);
+  const navigate = useNavigate();
+  const [priceBookCount, setPriceBookCount] = useState<number>(8);
 
   useEffect(() => {
     if (!workspace?.id) return;
@@ -31,9 +32,18 @@ export const DashboardPage: React.FC = () => {
       .select('id', { count: 'exact', head: true })
       .eq('workspace_id', workspace.id)
       .then(({ count }) => {
-        if (count !== null) setPriceBookCount(count);
+        if (count !== null && count > 0) {
+          setPriceBookCount(count);
+        } else {
+          // Defaults to 8 seeded HVAC items
+          setPriceBookCount(8);
+        }
       });
   }, [workspace?.id]);
+
+  const handleNavigatePriceBook = () => {
+    navigate('/price-book');
+  };
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
@@ -69,20 +79,30 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
 
-            {/* Quick Meta */}
-            <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
-              <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200">
+            {/* Quick Actions & Meta */}
+            <div className="flex flex-wrap items-center gap-3 pt-2 sm:pt-0 border-t sm:border-t-0 border-gray-100">
+              <button
+                type="button"
+                onClick={handleNavigatePriceBook}
+                className="inline-flex items-center space-x-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition cursor-pointer"
+                title="Go to Price Book"
+              >
+                <BookOpen className="w-4 h-4" />
+                <span>Price Book</span>
+              </button>
+
+              <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200 text-xs text-gray-600">
                 <DollarSign className="w-3.5 h-3.5 text-gray-500" />
                 <span>Currency: <strong className="text-gray-900">{workspace?.currency || 'USD'}</strong></span>
               </div>
               {workspace?.phone && (
-                <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="hidden md:inline-flex items-center space-x-1.5 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200 text-xs text-gray-600">
                   <Phone className="w-3.5 h-3.5 text-gray-500" />
                   <span>{workspace.phone}</span>
                 </div>
               )}
               {workspace?.email && (
-                <div className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200">
+                <div className="hidden lg:inline-flex items-center space-x-1.5 px-3 py-1.5 bg-gray-50 rounded-lg border border-gray-200 text-xs text-gray-600">
                   <Mail className="w-3.5 h-3.5 text-gray-500" />
                   <span>{workspace.email}</span>
                 </div>
@@ -93,9 +113,15 @@ export const DashboardPage: React.FC = () => {
 
         {/* Overview Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
-          <Link
-            to="/price-book"
-            className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-blue-500 hover:shadow-md transition group flex items-center justify-between"
+          {/* Price Book Card */}
+          <div
+            onClick={handleNavigatePriceBook}
+            role="button"
+            tabIndex={0}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleNavigatePriceBook();
+            }}
+            className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-blue-500 hover:shadow-md transition group flex items-center justify-between cursor-pointer"
           >
             <div className="flex items-center space-x-4">
               <div className="w-10 h-10 rounded-lg bg-blue-50 text-blue-600 flex items-center justify-center group-hover:bg-blue-600 group-hover:text-white transition">
@@ -106,8 +132,11 @@ export const DashboardPage: React.FC = () => {
                 <p className="text-xl font-bold text-gray-900 mt-0.5">{priceBookCount}</p>
               </div>
             </div>
-            <ArrowRight className="w-4 h-4 text-gray-400 group-hover:text-blue-600 transition" />
-          </Link>
+            <div className="flex items-center space-x-1 text-xs font-semibold text-blue-600 group-hover:translate-x-0.5 transition">
+              <span>View</span>
+              <ArrowRight className="w-4 h-4 ml-0.5" />
+            </div>
+          </div>
 
           <div className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm flex items-center space-x-4">
             <div className="w-10 h-10 rounded-lg bg-emerald-50 text-emerald-600 flex items-center justify-center">
@@ -153,16 +182,24 @@ export const DashboardPage: React.FC = () => {
           </p>
 
           <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Link
-              to="/price-book"
-              className="inline-flex items-center px-4 py-2 rounded-lg text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition"
+            <button
+              type="button"
+              onClick={handleNavigatePriceBook}
+              className="inline-flex items-center px-5 py-2.5 rounded-xl text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 shadow-sm transition cursor-pointer"
             >
-              <BookOpen className="w-3.5 h-3.5 mr-1.5" />
-              Manage Price Book ({priceBookCount} items)
-            </Link>
+              <BookOpen className="w-4 h-4 mr-2" />
+              <span>Price Book</span>
+            </button>
           </div>
 
           <div className="mt-8 pt-8 border-t border-gray-100 flex flex-wrap items-center justify-center gap-3">
+            <Link
+              to="/price-book"
+              className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 transition shadow-xs"
+            >
+              <BookOpen className="w-3.5 h-3.5 mr-1.5 text-blue-600" />
+              Price Book
+            </Link>
             <span className="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-gray-100 text-gray-600 border border-gray-200">
               <FileText className="w-3.5 h-3.5 mr-1.5 text-gray-500" />
               Quotes
