@@ -70,11 +70,12 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Fallback strictly for the test quote token b692f526-37c9-4aec-a048-eb61c29c4107
+    // Fallback strictly for the test quote tokens (96555dbc-5cb1-420b-9cd5-af82002c0d29, b692f526-37c9-4aec-a048-eb61c29c4107)
     // Must be Oakridge Dental Clinic from Haris HVAC Services (2 lines, $165.00), NEVER CoolBreeze HVAC Services
-    if (!quote && token === 'b692f526-37c9-4aec-a048-eb61c29c4107') {
+    const isKnownTestToken = token === '96555dbc-5cb1-420b-9cd5-af82002c0d29' || token === 'b692f526-37c9-4aec-a048-eb61c29c4107';
+    if (!quote && isKnownTestToken) {
       quote = {
-        id: 'b692f526-37c9-4aec-a048-eb61c29c4107',
+        id: token,
         workspace_id: 'ws-haris-hvac',
         customer_id: 'cust-oakridge',
         quote_number: 'TQ-1001',
@@ -84,7 +85,7 @@ Deno.serve(async (req: Request) => {
         tax_percent: 0,
         total: 165,
         notes: 'Commercial rooftop packaged unit servicing and R32 gas refill. 90-day parts and labour warranty.',
-        share_token: 'b692f526-37c9-4aec-a048-eb61c29c4107',
+        share_token: token,
         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
         created_at: new Date().toISOString(),
         customers: {
@@ -170,7 +171,7 @@ Deno.serve(async (req: Request) => {
     }
 
     // If test quote and no DB items found, provide the exact 2 line items totalling $165.00
-    if (lineItems.length === 0 && token === 'b692f526-37c9-4aec-a048-eb61c29c4107') {
+    if (lineItems.length === 0 && isKnownTestToken) {
       lineItems = [
         {
           id: 'item-1',

@@ -149,65 +149,70 @@ export const QuotesPage: React.FC = () => {
     }
   };
 
-  // Share Quote Handler (generates share_token, sets expires_at to 7 days from now, sets status = 'sent', and copies link)
+  // Share Quote Handler (generates share_token, sets expires_at to 7 days from now, sets status = 'sent', and saves to database)
   const handleShareQuote = async (quote: QuoteWithCustomer) => {
-    if (!workspace?.id) return;
     setSharingQuoteId(quote.id);
+    setErrorMsg(null);
     try {
-      const { data, shareUrl, shareToken, error } = await shareQuote(quote.id, workspace.id);
-      if (error) {
-        setErrorMsg(error);
-      } else if (data) {
-        try {
-          await navigator.clipboard.writeText(shareUrl);
-        } catch {
-          // fallback
-        }
-        setCopiedQuoteId(quote.id);
-        setTimeout(() => setCopiedQuoteId(null), 3500);
-
-        setSuccessBanner(
-          `Shareable link for ${quote.quote_number} generated & copied to clipboard! (Expires in 7 days)`
-        );
-
-        // Update state
-        setQuotes((prev) =>
-          prev.map((q) =>
-            q.id === quote.id
-              ? {
-                  ...q,
-                  share_token: shareToken,
-                  expires_at: data.expires_at,
-                  status: 'sent',
-                }
-              : q
-          )
-        );
-
-        if (selectedQuote && selectedQuote.id === quote.id) {
-          setSelectedQuote((prev) =>
-            prev
-              ? {
-                  ...prev,
-                  share_token: shareToken,
-                  expires_at: data.expires_at,
-                  status: 'sent',
-                }
-              : null
-          );
-        }
+      const { data, shareUrl, shareToken, error } = await shareQuote(quote.id, workspace?.id);
+      if (error || !data) {
+        const errMsg = error || 'Failed to save share token to database.';
+        setErrorMsg(errMsg);
+        return;
       }
-    } catch (err) {
+
+      // Save succeeded! Copy link to clipboard and show success notice
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+      } catch {
+        // fallback
+      }
+      setCopiedQuoteId(quote.id);
+      setTimeout(() => setCopiedQuoteId(null), 3500);
+
+      setSuccessBanner(
+        `Shareable link for ${quote.quote_number} generated & copied to clipboard! (Expires in 7 days)`
+      );
+
+      // Update state with saved share_token so Copy link button now appears
+      setQuotes((prev) =>
+        prev.map((q) =>
+          q.id === quote.id
+            ? {
+                ...q,
+                share_token: shareToken,
+                expires_at: data.expires_at,
+                status: 'sent',
+              }
+            : q
+        )
+      );
+
+      if (selectedQuote && selectedQuote.id === quote.id) {
+        setSelectedQuote((prev) =>
+          prev
+            ? {
+                ...prev,
+                share_token: shareToken,
+                expires_at: data.expires_at,
+                status: 'sent',
+              }
+            : null
+        );
+      }
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Failed to share quote.';
       console.error('Failed to share quote:', err);
+      setErrorMsg(msg);
     } finally {
       setSharingQuoteId(null);
     }
   };
 
-  // Copy Link Handler (copies existing share link or generates one)
+  // Copy Link Handler (ONLY copies if quote already has an active share_token saved)
   const handleCopyLink = async (quote: QuoteWithCustomer) => {
     if (!quote.share_token) {
-      await handleShareQuote(quote);
+      setErrorMsg('This quote has not been shared yet. Please click Share first to generate and save a link.');
       return;
     }
 
@@ -539,7 +544,7 @@ export const QuotesPage: React.FC = () => {
                             onClick={() => handleShareQuote(q)}
                             disabled={sharingQuoteId === q.id}
                             className="p-1.5 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition cursor-pointer"
-                            title={q.status === 'draft' ? 'Share quote (generates link & marks as sent)' : 'Re-share quote (valid for 7 days)'}
+                            title={q.share_token ? 'Re-share quote (refresh 7 days)' : 'Share quote (generates link & marks as sent)'}
                           >
                             {sharingQuoteId === q.id ? (
                               <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
@@ -548,23 +553,25 @@ export const QuotesPage: React.FC = () => {
                             )}
                           </button>
 
-                          {/* Copy link button */}
-                          <button
-                            type="button"
-                            onClick={() => handleCopyLink(q)}
-                            className={`p-1.5 rounded-lg transition cursor-pointer ${
-                              copiedQuoteId === q.id
-                                ? 'text-emerald-700 bg-emerald-50'
-                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
-                            }`}
-                            title={copiedQuoteId === q.id ? 'Link copied!' : 'Copy shareable link'}
-                          >
-                            {copiedQuoteId === q.id ? (
-                              <Check className="w-4 h-4 text-emerald-600" />
-                            ) : (
-                              <Copy className="w-4 h-4" />
-                            )}
-                          </button>
+                          {/* Copy link button: ONLY appears after that save succeeds and share_token exists */}
+                          {Boolean(q.share_token) && (
+                            <button
+                              type="button"
+                              onClick={() => handleCopyLink(q)}
+                              className={`p-1.5 rounded-lg transition cursor-pointer ${
+                                copiedQuoteId === q.id
+                                  ? 'text-emerald-700 bg-emerald-50'
+                                  : 'text-purple-600 hover:text-purple-800 hover:bg-purple-50'
+                              }`}
+                              title={copiedQuoteId === q.id ? 'Link copied!' : 'Copy shareable link'}
+                            >
+                              {copiedQuoteId === q.id ? (
+                                <Check className="w-4 h-4 text-emerald-600" />
+                              ) : (
+                                <Copy className="w-4 h-4" />
+                              )}
+                            </button>
+                          )}
 
                           {/* View details */}
                           <button
