@@ -523,35 +523,35 @@ export interface PublicQuoteData {
 export const TEST_QUOTE_TQ_1001: PublicQuoteData = {
   id: 'b692f526-37c9-4aec-a048-eb61c29c4107',
   quote_number: 'TQ-1001',
-  title: 'AC Diagnostic, Drain Line Flush & R32 Recharge',
+  title: 'HVAC Commercial Maintenance & Service',
   status: 'sent',
-  subtotal: 225,
+  subtotal: 165,
   tax_percent: 0,
-  total: 225,
-  notes: 'Scope includes full diagnostic of indoor and outdoor units, high-pressure nitrogen flush of clogged drain pan, and R32 refrigerant recharge to manufacturer specification. 90-day warranty on parts and labour.',
+  total: 165,
+  notes: 'Commercial rooftop packaged unit servicing and R32 gas refill. 90-day parts and labour warranty.',
   expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
   created_at: new Date().toISOString(),
   is_expired: false,
   customer: {
-    name: 'Robert Henderson',
-    phone: '(555) 234-5678',
-    email: 'robert.henderson@example.com',
-    address: '742 Evergreen Terrace, Springfield',
+    name: 'Oakridge Dental Clinic',
+    phone: '(555) 876-5432',
+    email: 'facilities@oakridgedental.com',
+    address: '1200 Commercial Way, Suite 4B',
   },
   workspace: {
-    business_name: 'CoolBreeze HVAC Services',
+    business_name: 'Haris HVAC Services',
     trade_type: 'HVAC',
     phone: '(555) 987-6543',
-    email: 'service@coolbreeze.com',
+    email: 'service@harishvac.com',
     currency: 'USD',
   },
   line_items: [
     {
       id: 'item-1',
       quote_id: 'b692f526-37c9-4aec-a048-eb61c29c4107',
-      workspace_id: 'ws-1',
+      workspace_id: 'ws-haris-hvac',
       price_book_item_id: null,
-      description: 'AC General Service & Inspection',
+      description: 'AC General Service',
       quantity: 1,
       unit: 'job',
       unit_price: 45,
@@ -560,24 +560,13 @@ export const TEST_QUOTE_TQ_1001: PublicQuoteData = {
     {
       id: 'item-2',
       quote_id: 'b692f526-37c9-4aec-a048-eb61c29c4107',
-      workspace_id: 'ws-1',
+      workspace_id: 'ws-haris-hvac',
       price_book_item_id: null,
       description: 'AC Gas Refill R32',
       quantity: 1,
       unit: 'job',
       unit_price: 120,
       line_total: 120,
-    },
-    {
-      id: 'item-3',
-      quote_id: 'b692f526-37c9-4aec-a048-eb61c29c4107',
-      workspace_id: 'ws-1',
-      price_book_item_id: null,
-      description: 'Drain Line Cleaning & Flush',
-      quantity: 1,
-      unit: 'job',
-      unit_price: 60,
-      line_total: 60,
     },
   ],
 };
@@ -609,7 +598,7 @@ export async function fetchPublicQuote(
       console.info('Edge function public-quote invocation fallback:', edgeErr);
     }
 
-    // 2. Direct query fallback (uses .limit(1), avoiding .single() errors)
+    // 2. Direct query fallback strictly filtered by share_token (exact match)
     const { data: quotesList, error: queryError } = await supabase
       .from('quotes')
       .select('*, customers(name, phone, email, address), workspaces(business_name, trade_type, phone, email, currency)')
@@ -618,10 +607,12 @@ export async function fetchPublicQuote(
 
     if (!queryError && quotesList && quotesList.length > 0) {
       const quote = quotesList[0];
+      // Only fetch its OWN line items for this specific quote and workspace
       const { data: lineItems } = await supabase
         .from('quote_line_items')
         .select('*')
         .eq('quote_id', quote.id)
+        .eq('workspace_id', quote.workspace_id)
         .order('id', { ascending: true });
 
       const isExpired = quote.expires_at ? new Date(quote.expires_at) < new Date() : false;
@@ -646,8 +637,8 @@ export async function fetchPublicQuote(
       return { data: formatted, error: null };
     }
 
-    // 3. Test token fallback for TQ-1001 (token: b692f526-37c9-4aec-a048-eb61c29c4107)
-    if (cleanToken === 'b692f526-37c9-4aec-a048-eb61c29c4107' || cleanToken.toLowerCase() === 'tq-1001') {
+    // 3. Fallback strictly for the test quote token b692f526-37c9-4aec-a048-eb61c29c4107
+    if (cleanToken === 'b692f526-37c9-4aec-a048-eb61c29c4107') {
       let savedStatus: QuoteStatus = 'sent';
       try {
         const stored = localStorage.getItem('tq_test_tq1001_status') as QuoteStatus;
