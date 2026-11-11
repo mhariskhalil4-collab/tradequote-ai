@@ -7,6 +7,7 @@ import {
   fetchQuoteDetails,
   updateQuoteStatus,
   deleteQuote,
+  shareQuote,
 } from '../services/quoteService';
 import type { QuoteWithCustomer, QuoteLineItem, QuoteStatus } from '../types/database';
 import {
@@ -24,6 +25,10 @@ import {
   Sparkles,
   X,
   Loader2,
+  Share2,
+  Copy,
+  Check,
+  ExternalLink,
 } from 'lucide-react';
 
 export const QuotesPage: React.FC = () => {
@@ -48,6 +53,10 @@ export const QuotesPage: React.FC = () => {
 
   // Status Change In-Progress
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+  // Share & Copy feedback states
+  const [sharingQuoteId, setSharingQuoteId] = useState<string | null>(null);
+  const [copiedQuoteId, setCopiedQuoteId] = useState<string | null>(null);
 
   const loadQuotes = async () => {
     if (!workspace?.id) {
@@ -137,6 +146,79 @@ export const QuotesPage: React.FC = () => {
       }
     } catch (err) {
       console.error('Failed to delete quote:', err);
+    }
+  };
+
+  // Share Quote Handler (generates share_token, sets expires_at to 7 days from now, sets status = 'sent', and copies link)
+  const handleShareQuote = async (quote: QuoteWithCustomer) => {
+    if (!workspace?.id) return;
+    setSharingQuoteId(quote.id);
+    try {
+      const { data, shareUrl, shareToken, error } = await shareQuote(quote.id, workspace.id);
+      if (error) {
+        setErrorMsg(error);
+      } else if (data) {
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+        } catch {
+          // fallback
+        }
+        setCopiedQuoteId(quote.id);
+        setTimeout(() => setCopiedQuoteId(null), 3500);
+
+        setSuccessBanner(
+          `Shareable link for ${quote.quote_number} generated & copied to clipboard! (Expires in 7 days)`
+        );
+
+        // Update state
+        setQuotes((prev) =>
+          prev.map((q) =>
+            q.id === quote.id
+              ? {
+                  ...q,
+                  share_token: shareToken,
+                  expires_at: data.expires_at,
+                  status: 'sent',
+                }
+              : q
+          )
+        );
+
+        if (selectedQuote && selectedQuote.id === quote.id) {
+          setSelectedQuote((prev) =>
+            prev
+              ? {
+                  ...prev,
+                  share_token: shareToken,
+                  expires_at: data.expires_at,
+                  status: 'sent',
+                }
+              : null
+          );
+        }
+      }
+    } catch (err) {
+      console.error('Failed to share quote:', err);
+    } finally {
+      setSharingQuoteId(null);
+    }
+  };
+
+  // Copy Link Handler (copies existing share link or generates one)
+  const handleCopyLink = async (quote: QuoteWithCustomer) => {
+    if (!quote.share_token) {
+      await handleShareQuote(quote);
+      return;
+    }
+
+    const shareUrl = `${window.location.origin}/q/${quote.share_token}`;
+    try {
+      await navigator.clipboard.writeText(shareUrl);
+      setCopiedQuoteId(quote.id);
+      setTimeout(() => setCopiedQuoteId(null), 3000);
+      setSuccessBanner(`Shareable link for ${quote.quote_number} copied to clipboard!`);
+    } catch (err) {
+      console.error('Failed to copy link:', err);
     }
   };
 
@@ -450,17 +532,55 @@ export const QuotesPage: React.FC = () => {
 
                       {/* Actions */}
                       <td className="py-3 px-4 text-center">
-                        <div className="inline-flex items-center space-x-1.5">
+                        <div className="inline-flex items-center space-x-1 sm:space-x-1.5">
+                          {/* Share button */}
                           <button
+                            type="button"
+                            onClick={() => handleShareQuote(q)}
+                            disabled={sharingQuoteId === q.id}
+                            className="p-1.5 rounded-lg text-blue-600 hover:text-blue-800 hover:bg-blue-50 transition cursor-pointer"
+                            title={q.status === 'draft' ? 'Share quote (generates link & marks as sent)' : 'Re-share quote (valid for 7 days)'}
+                          >
+                            {sharingQuoteId === q.id ? (
+                              <Loader2 className="w-4 h-4 animate-spin text-blue-600" />
+                            ) : (
+                              <Share2 className="w-4 h-4" />
+                            )}
+                          </button>
+
+                          {/* Copy link button */}
+                          <button
+                            type="button"
+                            onClick={() => handleCopyLink(q)}
+                            className={`p-1.5 rounded-lg transition cursor-pointer ${
+                              copiedQuoteId === q.id
+                                ? 'text-emerald-700 bg-emerald-50'
+                                : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                            }`}
+                            title={copiedQuoteId === q.id ? 'Link copied!' : 'Copy shareable link'}
+                          >
+                            {copiedQuoteId === q.id ? (
+                              <Check className="w-4 h-4 text-emerald-600" />
+                            ) : (
+                              <Copy className="w-4 h-4" />
+                            )}
+                          </button>
+
+                          {/* View details */}
+                          <button
+                            type="button"
                             onClick={() => handleOpenPreview(q)}
-                            className="p-1.5 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition"
+                            className="p-1.5 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
                             title="View quote details"
                           >
                             <Eye className="w-4 h-4" />
                           </button>
+
+                          {/* Delete */}
                           <button
+                            type="button"
                             onClick={() => handleDeleteQuote(q.id, q.quote_number)}
-                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition"
+                            className="p-1.5 rounded-lg text-gray-400 hover:text-red-600 hover:bg-red-50 transition cursor-pointer"
                             title="Delete quote"
                           >
                             <Trash2 className="w-4 h-4" />
@@ -525,6 +645,98 @@ export const QuotesPage: React.FC = () => {
                     {selectedQuote.customer?.phone && <p>📞 {selectedQuote.customer.phone}</p>}
                     {selectedQuote.customer?.email && <p>✉️ {selectedQuote.customer.email}</p>}
                   </div>
+                </div>
+
+                {/* Shareable Customer Link Box */}
+                <div className="p-4 rounded-xl bg-purple-50/60 border border-purple-200">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-2">
+                      <Share2 className="w-4 h-4 text-purple-600" />
+                      <span className="text-xs font-bold text-gray-900">
+                        Shareable Customer Link
+                      </span>
+                    </div>
+                    {selectedQuote.expires_at && (
+                      <span className="text-[10px] font-semibold text-purple-700 bg-purple-100 px-2 py-0.5 rounded-full">
+                        {new Date(selectedQuote.expires_at) < new Date()
+                          ? 'Link Expired'
+                          : `Expires ${new Date(selectedQuote.expires_at).toLocaleDateString()}`}
+                      </span>
+                    )}
+                  </div>
+
+                  {selectedQuote.share_token ? (
+                    <div className="space-y-2">
+                      <div className="flex items-center space-x-2">
+                        <input
+                          type="text"
+                          readOnly
+                          value={`${window.location.origin}/q/${selectedQuote.share_token}`}
+                          className="flex-1 px-3 py-1.5 rounded-lg border border-purple-200 bg-white text-xs font-mono text-gray-800 select-all"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => handleCopyLink(selectedQuote)}
+                          className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 transition cursor-pointer"
+                        >
+                          {copiedQuoteId === selectedQuote.id ? (
+                            <>
+                              <Check className="w-3.5 h-3.5" />
+                              <span>Copied!</span>
+                            </>
+                          ) : (
+                            <>
+                              <Copy className="w-3.5 h-3.5" />
+                              <span>Copy link</span>
+                            </>
+                          )}
+                        </button>
+                        <a
+                          href={`/q/${selectedQuote.share_token}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-1.5 rounded-lg text-gray-600 hover:text-purple-700 bg-white border border-gray-300 hover:bg-gray-50 transition cursor-pointer"
+                          title="Open public estimate portal in new tab"
+                        >
+                          <ExternalLink className="w-4 h-4" />
+                        </a>
+                      </div>
+                      <div className="flex items-center justify-between text-[11px] text-gray-500">
+                        <span>Anyone with this link can view and accept/decline without logging in.</span>
+                        <button
+                          type="button"
+                          onClick={() => handleShareQuote(selectedQuote)}
+                          className="text-purple-600 hover:text-purple-800 font-semibold underline cursor-pointer"
+                        >
+                          Re-share & refresh 7 days
+                        </button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+                      <p className="text-xs text-gray-600">
+                        Generate a secure link valid for 7 days so your customer can approve this estimate online.
+                      </p>
+                      <button
+                        type="button"
+                        onClick={() => handleShareQuote(selectedQuote)}
+                        disabled={sharingQuoteId === selectedQuote.id}
+                        className="inline-flex items-center space-x-1.5 px-4 py-1.5 rounded-lg text-xs font-bold text-white bg-purple-600 hover:bg-purple-700 disabled:opacity-50 transition shadow-xs cursor-pointer"
+                      >
+                        {sharingQuoteId === selectedQuote.id ? (
+                          <>
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                            <span>Sharing...</span>
+                          </>
+                        ) : (
+                          <>
+                            <Share2 className="w-3.5 h-3.5" />
+                            <span>Share Quote (7 Days)</span>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 {/* Line Items Breakdown */}

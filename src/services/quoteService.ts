@@ -452,3 +452,178 @@ function fallbackClientMatcher(
   };
 }
 
+/**
+ * Generates a unique share token, sets expires_at to 7 days from now,
+ * and marks the quote status as 'sent'.
+ */
+export async function shareQuote(
+  quoteId: string,
+  workspaceId: string
+): Promise<{ data: Quote | null; shareUrl: string; shareToken: string; error: string | null }> {
+  try {
+    const shareToken =
+      typeof crypto !== 'undefined' && crypto.randomUUID
+        ? crypto.randomUUID()
+        : Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+    const expiresAt = new Date();
+    expiresAt.setDate(expiresAt.getDate() + 7); // Exactly 7 days from now
+
+    const { data, error } = await supabase
+      .from('quotes')
+      .update({
+        share_token: shareToken,
+        expires_at: expiresAt.toISOString(),
+        status: 'sent',
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', quoteId)
+      .eq('workspace_id', workspaceId)
+      .select()
+      .single();
+
+    if (error) return { data: null, shareUrl: '', shareToken: '', error: error.message };
+
+    const shareUrl = `${window.location.origin}/q/${shareToken}`;
+    return { data: data as Quote, shareUrl, shareToken, error: null };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Failed to generate share link.';
+    return { data: null, shareUrl: '', shareToken: '', error: msg };
+  }
+}
+
+export interface PublicQuoteData {
+  id: string;
+  quote_number: string;
+  title: string;
+  status: QuoteStatus;
+  subtotal: number;
+  tax_percent: number;
+  total: number;
+  notes: string | null;
+  expires_at: string | null;
+  created_at: string;
+  is_expired: boolean;
+  customer: {
+    name: string;
+    phone?: string | null;
+    email?: string | null;
+    address?: string | null;
+  } | null;
+  workspace: {
+    business_name: string;
+    trade_type: string;
+    phone?: string | null;
+    email?: string | null;
+    currency?: string;
+  } | null;
+  line_items: QuoteLineItem[];
+}
+
+/**
+ * Loads quote details for a customer via share_token through the Supabase Edge Function 'public-quote'.
+ * No login is required.
+ */
+export async function fetchPublicQuote(
+  token: string
+): Promise<{ data: PublicQuoteData | null; error: string | null }> {
+  try {
+    // 1. Invoke Supabase Edge Function 'public-quote'
+    try {
+      const { data, error } = await supabase.functions.invoke('public-quote', {
+        body: { token: token.trim() },
+      });
+
+      if (!error && data && data.quote_number) {
+        return { data: data as PublicQuoteData, error: null };
+      }
+    } catch (edgeErr) {
+      console.info('Edge function public-quote invocation fallback:', edgeErr);
+    }
+
+    // 2. Resilient direct query fallback
+    const { data: quote, error: quoteError } = await supabase
+      .from('quotes')
+      .select('*, customers(name, phone, email, address), workspaces(business_name, trade_type, phone, email, currency)')
+      .eq('share_token', token.trim())
+      .single();
+
+    if (quoteError || !quote) {
+      return { data: null, error: quoteError?.message || 'Quote not found.' };
+    }
+
+    const { data: lineItems } = await supabase
+      .from('quote_line_items')
+      .select('*')
+      .eq('quote_id', quote.id)
+      .order('id', { ascending: true });
+
+    const isExpired = quote.expires_at ? new Date(quote.expires_at) < new Date() : false;
+
+    const formatted: PublicQuoteData = {
+      id: quote.id,
+      quote_number: quote.quote_number,
+      title: quote.title,
+      status: quote.status,
+      subtotal: Number(quote.subtotal) || 0,
+      tax_percent: Number(quote.tax_percent) || 0,
+      total: Number(quote.total) || 0,
+      notes: quote.notes,
+      expires_at: quote.expires_at,
+      created_at: quote.created_at,
+      is_expired: isExpired,
+      customer: (quote as any).customers || null,
+      workspace: (quote as any).workspaces || null,
+      line_items: (lineItems as QuoteLineItem[]) || [],
+    };
+
+    return { data: formatted, error: null };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : 'Failed to fetch public quote.';
+    return { data: null, error: msg };
+  }
+}
+
+/**
+ * Processes customer Accept or Decline on a public quote.
+ */
+export async function respondToPublicQuote(
+  token: string,
+  action: 'accept' | 'decline'
+): Promise<{ success: boolean; status: QuoteStatus; error: string | null }> {
+  const targetStatus: QuoteStatus = action === 'accept' ? 'accepted' : 'declined';
+  try {
+    // 1. Invoke Edge Function
+    try {
+      const { data, error } = await supabase.functions.invoke('public-quote', {
+        body: { token: token.trim(), action },
+      });
+
+      if (!error && data?.success) {
+        return { success: true, status: (data.status as QuoteStatus) || targetStatus, error: null };
+      }
+    } catch (edgeErr) {
+      console.info('Edge function response fallback:', edgeErr);
+    }
+
+    // 2. Direct query fallback
+    const { error: updateError } = await supabase
+      .from('quotes')
+      .update({
+        status: targetStatus,
+        updated_at: new Date().toISOString(),
+      })
+      .eq('share_token', token.trim());
+
+    if (updateError) {
+      return { success: false, status: targetStatus, error: updateError.message };
+    }
+
+    return { success: true, status: targetStatus, error: null };
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : `Failed to ${action} quote.`;
+    return { success: false, status: targetStatus, error: msg };
+  }
+}
+
+

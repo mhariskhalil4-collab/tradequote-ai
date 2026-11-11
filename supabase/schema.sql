@@ -248,6 +248,21 @@ CREATE POLICY "Users can view workspace quotes"
     AND workspaces.owner_id = auth.uid()
   ));
 
+-- Allow public viewing of quotes with a share_token (no login needed)
+DROP POLICY IF EXISTS "Public can view shared quotes" ON public.quotes;
+CREATE POLICY "Public can view shared quotes"
+  ON public.quotes FOR SELECT
+  TO anon, authenticated
+  USING (share_token IS NOT NULL AND share_token != '');
+
+-- Allow public customer acceptance or decline of shared quotes
+DROP POLICY IF EXISTS "Public can update shared quotes status" ON public.quotes;
+CREATE POLICY "Public can update shared quotes status"
+  ON public.quotes FOR UPDATE
+  TO anon, authenticated
+  USING (share_token IS NOT NULL AND share_token != '')
+  WITH CHECK (share_token IS NOT NULL AND share_token != '');
+
 DROP POLICY IF EXISTS "Users can insert workspace quotes" ON public.quotes;
 CREATE POLICY "Users can insert workspace quotes"
   ON public.quotes FOR INSERT
@@ -292,6 +307,17 @@ CREATE POLICY "Users can view workspace quote line items"
     SELECT 1 FROM public.workspaces
     WHERE workspaces.id = quote_line_items.workspace_id
     AND workspaces.owner_id = auth.uid()
+  ));
+
+-- Allow public viewing of line items for shared quotes
+DROP POLICY IF EXISTS "Public can view line items for shared quotes" ON public.quote_line_items;
+CREATE POLICY "Public can view line items for shared quotes"
+  ON public.quote_line_items FOR SELECT
+  TO anon, authenticated
+  USING (EXISTS (
+    SELECT 1 FROM public.quotes
+    WHERE quotes.id = quote_line_items.quote_id
+    AND quotes.share_token IS NOT NULL
   ));
 
 DROP POLICY IF EXISTS "Users can insert workspace quote line items" ON public.quote_line_items;

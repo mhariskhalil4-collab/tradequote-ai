@@ -10,6 +10,7 @@ import { PriceBookPage } from './pages/PriceBookPage';
 import { CustomersPage } from './pages/CustomersPage';
 import { QuotesPage } from './pages/QuotesPage';
 import { NewQuotePage } from './pages/NewQuotePage';
+import { PublicQuotePage } from './pages/PublicQuotePage';
 
 export default function App() {
   return (
@@ -105,6 +106,8 @@ export default function App() {
             path="/quote"
             element={<Navigate to="/quotes" replace />}
           />
+          {/* Public shareable quote route - no login needed */}
+          <Route path="/q/:token" element={<PublicQuotePage />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>
