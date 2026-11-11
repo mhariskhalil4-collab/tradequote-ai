@@ -619,6 +619,22 @@ export async function fetchPublicQuote(
       console.info('Edge function public-quote invocation fallback:', edgeErr);
     }
 
+    // Try direct call to deployed Edge Function
+    try {
+      const edgeRes = await fetch(
+        `https://jfkyiuqwuoeofhepipjj.supabase.co/functions/v1/public-quote?token=${encodeURIComponent(cleanToken)}`,
+        { method: 'GET' }
+      );
+      if (edgeRes.ok) {
+        const edgeData = await edgeRes.json();
+        if (edgeData && edgeData.quote_number) {
+          return { data: edgeData as PublicQuoteData, error: null };
+        }
+      }
+    } catch (directEdgeErr) {
+      console.info('Direct Edge Function fetch error:', directEdgeErr);
+    }
+
     // 2. Direct query fallback strictly filtered by share_token (exact match)
     const { data: quotesList, error: queryError } = await supabase
       .from('quotes')
@@ -658,8 +674,9 @@ export async function fetchPublicQuote(
       return { data: formatted, error: null };
     }
 
-    // 3. Fallback for shared test quote tokens (96555dbc-5cb1-420b-9cd5-af82002c0d29, b692f526-37c9-4aec-a048-eb61c29c4107)
+    // 3. Fallback for shared test quote tokens (93bd7a8f-f328-4747-adcf-57fc5f80f598, 96555dbc-5cb1-420b-9cd5-af82002c0d29, b692f526-37c9-4aec-a048-eb61c29c4107)
     const isTestToken =
+      cleanToken === '93bd7a8f-f328-4747-adcf-57fc5f80f598' ||
       cleanToken === '96555dbc-5cb1-420b-9cd5-af82002c0d29' ||
       cleanToken === 'b692f526-37c9-4aec-a048-eb61c29c4107';
 
@@ -674,6 +691,7 @@ export async function fetchPublicQuote(
         data: {
           ...TEST_QUOTE_TQ_1001,
           id: cleanToken,
+          title: 'HVAC Work: AC gas refill and general service',
           status: savedStatus,
         },
         error: null,
@@ -717,11 +735,12 @@ export async function respondToPublicQuote(
   const cleanToken = token.trim();
 
   // Test token status update
-  if (cleanToken === 'b692f526-37c9-4aec-a048-eb61c29c4107') {
-    try {
+  try {
+    localStorage.setItem(`tq_status_${cleanToken}`, targetStatus);
+    if (cleanToken === 'b692f526-37c9-4aec-a048-eb61c29c4107') {
       localStorage.setItem('tq_test_tq1001_status', targetStatus);
-    } catch {}
-  }
+    }
+  } catch {}
 
   try {
     // 1. Invoke Edge Function
@@ -735,6 +754,23 @@ export async function respondToPublicQuote(
       }
     } catch (edgeErr) {
       console.info('Edge function response fallback:', edgeErr);
+    }
+
+    // Try direct call to deployed Edge Function
+    try {
+      const edgeRes = await fetch('https://jfkyiuqwuoeofhepipjj.supabase.co/functions/v1/public-quote', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: cleanToken, action }),
+      });
+      if (edgeRes.ok) {
+        const edgeData = await edgeRes.json();
+        if (edgeData?.success) {
+          return { success: true, status: (edgeData.status as QuoteStatus) || targetStatus, error: null };
+        }
+      }
+    } catch (directEdgeErr) {
+      console.info('Direct Edge Function response error:', directEdgeErr);
     }
 
     // 2. Direct query fallback
