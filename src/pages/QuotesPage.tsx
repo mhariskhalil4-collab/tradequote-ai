@@ -9,6 +9,8 @@ import {
   deleteQuote,
   shareQuote,
 } from '../services/quoteService';
+import { createInvoiceFromQuote } from '../services/invoiceService';
+import { exportQuotePDF } from '../utils/pdfGenerator';
 import type { QuoteWithCustomer, QuoteLineItem, QuoteStatus } from '../types/database';
 import {
   FileText,
@@ -29,6 +31,8 @@ import {
   Copy,
   Check,
   ExternalLink,
+  Receipt,
+  FileDown,
 } from 'lucide-react';
 
 export const QuotesPage: React.FC = () => {
@@ -57,6 +61,7 @@ export const QuotesPage: React.FC = () => {
   // Share & Copy feedback states
   const [sharingQuoteId, setSharingQuoteId] = useState<string | null>(null);
   const [copiedQuoteId, setCopiedQuoteId] = useState<string | null>(null);
+  const [creatingInvoiceId, setCreatingInvoiceId] = useState<string | null>(null);
 
   const loadQuotes = async () => {
     if (!workspace?.id) {
@@ -224,6 +229,47 @@ export const QuotesPage: React.FC = () => {
       setSuccessBanner(`Shareable link for ${quote.quote_number} copied to clipboard!`);
     } catch (err) {
       console.error('Failed to copy link:', err);
+    }
+  };
+
+  // Create Invoice Handler (creates invoice from accepted quote and copies line items)
+  const handleCreateInvoice = async (quote: QuoteWithCustomer) => {
+    if (!workspace?.id) return;
+    setCreatingInvoiceId(quote.id);
+    setErrorMsg(null);
+    try {
+      const { data, error } = await createInvoiceFromQuote(quote, workspace.id);
+      if (error || !data) {
+        setErrorMsg(error || 'Failed to create invoice.');
+      } else {
+        setSuccessBanner(
+          `Invoice ${data.invoice_number} successfully created for ${quote.quote_number}! Amount: $${data.amount.toFixed(2)}`
+        );
+        navigate('/invoices');
+      }
+    } catch (err: unknown) {
+      setErrorMsg(err instanceof Error ? err.message : 'Error creating invoice.');
+    } finally {
+      setCreatingInvoiceId(null);
+    }
+  };
+
+  // PDF Export Handler
+  const handleExportPDF = async (quote: QuoteWithCustomer, preloadedItems?: QuoteLineItem[]) => {
+    try {
+      if (preloadedItems && preloadedItems.length > 0) {
+        exportQuotePDF(quote, workspace, preloadedItems);
+        return;
+      }
+      let items = quote.quote_line_items || [];
+      if (items.length === 0 && workspace?.id) {
+        const { items: dbItems } = await fetchQuoteDetails(quote.id, workspace.id);
+        if (dbItems && dbItems.length > 0) items = dbItems;
+      }
+      exportQuotePDF(quote, workspace, items);
+    } catch (err) {
+      console.error('Failed to export PDF:', err);
+      alert('Could not export PDF.');
     }
   };
 
@@ -538,6 +584,34 @@ export const QuotesPage: React.FC = () => {
                       {/* Actions */}
                       <td className="py-3 px-4 text-center">
                         <div className="inline-flex items-center space-x-1 sm:space-x-1.5">
+                          {/* Create invoice button (shown on accepted quotes) */}
+                          {q.status === 'accepted' && (
+                            <button
+                              type="button"
+                              onClick={() => handleCreateInvoice(q)}
+                              disabled={creatingInvoiceId === q.id}
+                              className="inline-flex items-center space-x-1 px-2.5 py-1 rounded-lg text-xs font-bold text-white bg-indigo-600 hover:bg-indigo-700 shadow-xs transition cursor-pointer"
+                              title="Create Invoice from this accepted quote"
+                            >
+                              {creatingInvoiceId === q.id ? (
+                                <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                              ) : (
+                                <Receipt className="w-3.5 h-3.5" />
+                              )}
+                              <span>Create invoice</span>
+                            </button>
+                          )}
+
+                          {/* Export PDF */}
+                          <button
+                            type="button"
+                            onClick={() => handleExportPDF(q)}
+                            className="p-1.5 rounded-lg text-gray-500 hover:text-blue-600 hover:bg-blue-50 transition cursor-pointer"
+                            title="Download PDF Estimate"
+                          >
+                            <FileDown className="w-4 h-4" />
+                          </button>
+
                           {/* Share button */}
                           <button
                             type="button"
@@ -858,12 +932,39 @@ export const QuotesPage: React.FC = () => {
                   </select>
                 </div>
 
-                <button
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 bg-gray-900 hover:bg-black text-white text-xs font-semibold rounded-xl transition"
-                >
-                  Close
-                </button>
+                <div className="flex items-center space-x-2">
+                  {selectedQuote.status === 'accepted' && (
+                    <button
+                      type="button"
+                      onClick={() => handleCreateInvoice(selectedQuote)}
+                      disabled={creatingInvoiceId === selectedQuote.id}
+                      className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white text-xs font-bold rounded-xl transition shadow-xs cursor-pointer"
+                    >
+                      {creatingInvoiceId === selectedQuote.id ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                      ) : (
+                        <Receipt className="w-3.5 h-3.5" />
+                      )}
+                      <span>Create invoice</span>
+                    </button>
+                  )}
+
+                  <button
+                    type="button"
+                    onClick={() => handleExportPDF(selectedQuote, modalItems)}
+                    className="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-white border border-gray-300 hover:bg-gray-50 text-gray-700 text-xs font-semibold rounded-xl transition cursor-pointer"
+                  >
+                    <FileDown className="w-3.5 h-3.5 text-blue-600" />
+                    <span>Download PDF</span>
+                  </button>
+
+                  <button
+                    onClick={() => setShowModal(false)}
+                    className="px-4 py-2 bg-gray-900 hover:bg-black text-white text-xs font-semibold rounded-xl transition"
+                  >
+                    Close
+                  </button>
+                </div>
               </div>
             </div>
           </div>

@@ -18,7 +18,9 @@ import {
   User,
   ShieldCheck,
   Send,
+  FileDown,
 } from 'lucide-react';
+import { exportQuotePDF } from '../utils/pdfGenerator';
 
 export const PublicQuotePage: React.FC = () => {
   const { token } = useParams<{ token: string }>();
@@ -242,6 +244,17 @@ export const PublicQuotePage: React.FC = () => {
                   </div>
 
                   <div className="text-left sm:text-right space-y-1 text-xs text-gray-500">
+                    <div className="mb-2 sm:flex sm:justify-end">
+                      <button
+                        type="button"
+                        onClick={() => exportQuotePDF(quote as any, quote.workspace as any, quote.line_items || [])}
+                        className="inline-flex items-center space-x-1.5 px-3 py-1.5 rounded-lg border border-gray-300 bg-white hover:bg-gray-50 text-gray-700 text-xs font-semibold shadow-xs transition cursor-pointer"
+                        title="Download clean one-page PDF estimate"
+                      >
+                        <FileDown className="w-3.5 h-3.5 text-blue-600" />
+                        <span>Download PDF</span>
+                      </button>
+                    </div>
                     <p className="flex items-center sm:justify-end space-x-1.5">
                       <Calendar className="w-3.5 h-3.5 text-gray-400" />
                       <span>

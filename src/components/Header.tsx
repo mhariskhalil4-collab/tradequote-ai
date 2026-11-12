@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Wrench, LogOut, Building2, User as UserIcon, LayoutDashboard, BookOpen, Users, FileText } from 'lucide-react';
+import { Wrench, LogOut, Building2, User as UserIcon, LayoutDashboard, BookOpen, Users, FileText, Receipt } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const { user, workspace, signOut } = useAuth();
@@ -79,6 +79,18 @@ export const Header: React.FC = () => {
               >
                 <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600" />
                 <span>Quotes</span>
+              </Link>
+              <Link
+                to="/invoices"
+                onClick={() => navigate('/invoices')}
+                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                  location.pathname.startsWith('/invoice')
+                    ? 'bg-blue-50 text-blue-700'
+                    : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
+                }`}
+              >
+                <Receipt className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600" />
+                <span>Invoices</span>
               </Link>
             </nav>
           )}

@@ -16,6 +16,7 @@ import {
   ArrowRight,
   Plus,
   Sparkles,
+  Receipt,
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
@@ -24,6 +25,7 @@ export const DashboardPage: React.FC = () => {
   const [priceBookCount, setPriceBookCount] = useState<number>(8);
   const [customerCount, setCustomerCount] = useState<number>(0);
   const [quoteCount, setQuoteCount] = useState<number>(0);
+  const [invoiceCount, setInvoiceCount] = useState<number>(0);
 
   useEffect(() => {
     if (!workspace?.id) return;
@@ -60,6 +62,17 @@ export const DashboardPage: React.FC = () => {
       .then(({ count }) => {
         if (count !== null) {
           setQuoteCount(count);
+        }
+      });
+
+    // Fetch Invoices Count
+    supabase
+      .from('invoices')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspace.id)
+      .then(({ count }) => {
+        if (count !== null) {
+          setInvoiceCount(count);
         }
       });
   }, [workspace?.id]);
@@ -119,6 +132,15 @@ export const DashboardPage: React.FC = () => {
                 <span>Quotes</span>
               </Link>
               <Link
+                to="/invoices"
+                onClick={() => navigate('/invoices')}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-semibold shadow-sm transition cursor-pointer"
+                title="Go to Invoices"
+              >
+                <Receipt className="w-3.5 h-3.5" />
+                <span>Invoices</span>
+              </Link>
+              <Link
                 to="/price-book"
                 onClick={() => navigate('/price-book')}
                 className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition cursor-pointer"
@@ -157,8 +179,8 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Overview Active Modules: 3 Active Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8">
+        {/* Overview Active Modules: 4 Active Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           {/* Quotes Card */}
           <Link
             to="/quotes"
@@ -175,6 +197,27 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center space-x-1 text-xs font-semibold text-emerald-600 group-hover:translate-x-0.5 transition">
+              <span>View</span>
+              <ArrowRight className="w-4 h-4 ml-0.5" />
+            </div>
+          </Link>
+
+          {/* Invoices Card */}
+          <Link
+            to="/invoices"
+            onClick={() => navigate('/invoices')}
+            className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-indigo-500 hover:shadow-md transition group flex items-center justify-between cursor-pointer"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 rounded-lg bg-indigo-50 text-indigo-600 flex items-center justify-center group-hover:bg-indigo-600 group-hover:text-white transition">
+                <Receipt className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Invoices</p>
+                <p className="text-xl font-bold text-gray-900 mt-0.5">{invoiceCount}</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-1 text-xs font-semibold text-indigo-600 group-hover:translate-x-0.5 transition">
               <span>View</span>
               <ArrowRight className="w-4 h-4 ml-0.5" />
             </div>
@@ -253,6 +296,14 @@ export const DashboardPage: React.FC = () => {
               <span>Quotes ({quoteCount})</span>
             </Link>
             <Link
+              to="/invoices"
+              onClick={() => navigate('/invoices')}
+              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm transition cursor-pointer"
+            >
+              <Receipt className="w-4 h-4 mr-2 text-indigo-600" />
+              <span>Invoices ({invoiceCount})</span>
+            </Link>
+            <Link
               to="/price-book"
               onClick={() => navigate('/price-book')}
               className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm transition cursor-pointer"
@@ -278,6 +329,14 @@ export const DashboardPage: React.FC = () => {
             >
               <FileText className="w-3.5 h-3.5 mr-1.5 text-emerald-600" />
               Quotes ({quoteCount})
+            </Link>
+            <Link
+              to="/invoices"
+              onClick={() => navigate('/invoices')}
+              className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-indigo-50 text-indigo-700 border border-indigo-200 hover:bg-indigo-100 transition shadow-xs cursor-pointer"
+            >
+              <Receipt className="w-3.5 h-3.5 mr-1.5 text-indigo-600" />
+              Invoices ({invoiceCount})
             </Link>
             <Link
               to="/quotes/new"
