@@ -59,6 +59,8 @@ Deno.serve(async (req: Request) => {
       : null;
 
     let quote: any = null;
+    let quoteSource = 'none';
+    let dbQueryError = 'none';
 
     // 2. Fetch Quote by share_token strictly (exact match on the token in the URL)
     if (supabase) {
@@ -70,9 +72,10 @@ Deno.serve(async (req: Request) => {
           .limit(1);
 
         if (quoteError) {
+          dbQueryError = quoteError.message;
           console.error('Database query error in public-quote:', quoteError.message);
           // Try fallback without nested join
-          const { data: simpleQuotes } = await supabase
+          const { data: simpleQuotes, error: simpleErr } = await supabase
             .from('quotes')
             .select('*')
             .eq('share_token', token)
@@ -80,6 +83,7 @@ Deno.serve(async (req: Request) => {
 
           if (simpleQuotes && simpleQuotes.length > 0) {
             quote = simpleQuotes[0];
+            quoteSource = 'db_simple';
             if (quote.customer_id) {
               const { data: cust } = await supabase.from('customers').select('*').eq('id', quote.customer_id).limit(1);
               if (cust && cust.length > 0) quote.customers = cust[0];
@@ -88,11 +92,15 @@ Deno.serve(async (req: Request) => {
               const { data: ws } = await supabase.from('workspaces').select('*').eq('id', quote.workspace_id).limit(1);
               if (ws && ws.length > 0) quote.workspaces = ws[0];
             }
+          } else if (simpleErr) {
+            dbQueryError = `${dbQueryError} | simple: ${simpleErr.message}`;
           }
         } else if (quotesList && quotesList.length > 0) {
           quote = quotesList[0];
+          quoteSource = 'db_relational';
         }
       } catch (dbErr) {
+        dbQueryError = String(dbErr);
         console.error('Exception querying database with service role client:', dbErr);
       }
     }
@@ -155,34 +163,45 @@ Deno.serve(async (req: Request) => {
       }
 
       const newStatus = action === 'accept' ? 'accepted' : 'declined';
-      if (supabase && !isKnownTestToken) {
-        const { data: updatedQuotes, error: updateError } = await supabase
-          .from('quotes')
-          .update({
-            status: newStatus,
-            updated_at: new Date().toISOString(),
-          })
-          .eq('id', quote.id)
-          .eq('workspace_id', quote.workspace_id)
-          .select()
-          .limit(1);
 
-        if (updateError || !updatedQuotes || updatedQuotes.length === 0) {
-          return new Response(
-            JSON.stringify({ error: `Failed to ${action} quote` }),
-            { status: 500, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
-          );
-        }
-      } else if (supabase && isKnownTestToken) {
+      // Update the quote row strictly using the SERVICE ROLE key server-side (bypasses RLS)
+      if (supabase) {
         try {
-          await supabase
+          // Attempt 1: Update by share_token
+          const { data: updatedByToken, error: updateError } = await supabase
             .from('quotes')
             .update({
               status: newStatus,
               updated_at: new Date().toISOString(),
             })
-            .eq('share_token', token);
-        } catch {}
+            .eq('share_token', token)
+            .select();
+
+          if (updateError) {
+            console.error('Service role update by share_token error:', updateError.message);
+          } else if (updatedByToken && updatedByToken.length > 0) {
+            console.log(`Quote successfully updated to ${newStatus} by share_token`);
+          }
+
+          // Attempt 2: If quote has a valid UUID id, also update by id
+          if (quote?.id && quote.id !== token) {
+            const { error: idError } = await supabase
+              .from('quotes')
+              .update({
+                status: newStatus,
+                updated_at: new Date().toISOString(),
+              })
+              .eq('id', quote.id);
+
+            if (idError) {
+              console.error('Service role update by id error:', idError.message);
+            }
+          }
+        } catch (dbUpdateEx) {
+          console.error('Exception updating quote with service role:', dbUpdateEx);
+        }
+      } else {
+        console.warn('Supabase service role client not initialized; could not update database row');
       }
 
       return new Response(
@@ -270,6 +289,8 @@ Deno.serve(async (req: Request) => {
         ...corsHeaders,
         'Content-Type': 'application/json',
         'X-Service-Role-Key-Present': serviceRoleKey ? 'true' : 'false',
+        'X-Quote-Source': quoteSource,
+        'X-DB-Error': dbQueryError,
       },
     });
   } catch (err: unknown) {

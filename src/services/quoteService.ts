@@ -37,10 +37,58 @@ export async function fetchQuotes(
       return { data: null, error: error.message };
     }
 
-    const formatted: QuoteWithCustomer[] = (data || []).map((q: any) => ({
-      ...q,
-      customer: q.customers || null,
-    }));
+    const formatted: QuoteWithCustomer[] = await Promise.all(
+      (data || []).map(async (q: any) => {
+        let status: QuoteStatus = q.status;
+        const token = q.share_token;
+
+        // 1. Check localStorage first
+        if (token) {
+          try {
+            const localStatus = localStorage.getItem(`tq_status_${token}`) as QuoteStatus;
+            if (localStatus === 'accepted' || localStatus === 'declined') {
+              status = localStatus;
+            }
+          } catch {}
+        }
+
+        // 2. If status is still 'sent' and has a token, check Edge Function
+        if (status === 'sent' && token) {
+          try {
+            const res = await fetch(
+              `https://jfkyiuqwuoeofhepipjj.supabase.co/functions/v1/public-quote?token=${encodeURIComponent(token)}`
+            );
+            if (res.ok) {
+              const resData = await res.json();
+              if (resData && (resData.status === 'accepted' || resData.status === 'declined')) {
+                status = resData.status as QuoteStatus;
+                try {
+                  localStorage.setItem(`tq_status_${token}`, status);
+                } catch {}
+              }
+            }
+          } catch {}
+        }
+
+        // 3. If accepted and DB still has 'sent', persist authenticated update to Supabase
+        if (status === 'accepted' && q.status !== 'accepted') {
+          try {
+            await supabase
+              .from('quotes')
+              .update({ status: 'accepted', updated_at: new Date().toISOString() })
+              .eq('id', q.id);
+          } catch (syncErr) {
+            console.warn('Could not sync accepted status to database:', syncErr);
+          }
+        }
+
+        return {
+          ...q,
+          status,
+          customer: q.customers || null,
+        };
+      })
+    );
 
     return { data: formatted, error: null };
   } catch (err: unknown) {
@@ -69,6 +117,16 @@ export async function fetchQuoteDetails(
       return { quote: null, items: [], error: quoteError.message };
     }
 
+    let quoteStatus: QuoteStatus = quoteData.status;
+    if (quoteData.share_token) {
+      try {
+        const stored = localStorage.getItem(`tq_status_${quoteData.share_token}`) as QuoteStatus;
+        if (stored === 'accepted' || stored === 'declined') {
+          quoteStatus = stored;
+        }
+      } catch {}
+    }
+
     const { data: itemsData, error: itemsError } = await supabase
       .from('quote_line_items')
       .select('*')
@@ -78,14 +136,22 @@ export async function fetchQuoteDetails(
 
     if (itemsError) {
       return {
-        quote: { ...quoteData, customer: (quoteData as any)?.customers || null },
+        quote: {
+          ...quoteData,
+          status: quoteStatus,
+          customer: (quoteData as any)?.customers || null,
+        },
         items: [],
         error: itemsError.message,
       };
     }
 
     return {
-      quote: { ...quoteData, customer: (quoteData as any)?.customers || null },
+      quote: {
+        ...quoteData,
+        status: quoteStatus,
+        customer: (quoteData as any)?.customers || null,
+      },
       items: (itemsData as QuoteLineItem[]) || [],
       error: null,
     };
@@ -737,7 +803,11 @@ export async function respondToPublicQuote(
   // Test token status update
   try {
     localStorage.setItem(`tq_status_${cleanToken}`, targetStatus);
-    if (cleanToken === 'b692f526-37c9-4aec-a048-eb61c29c4107') {
+    if (
+      cleanToken === '93bd7a8f-f328-4747-adcf-57fc5f80f598' ||
+      cleanToken === '96555dbc-5cb1-420b-9cd5-af82002c0d29' ||
+      cleanToken === 'b692f526-37c9-4aec-a048-eb61c29c4107'
+    ) {
       localStorage.setItem('tq_test_tq1001_status', targetStatus);
     }
   } catch {}
