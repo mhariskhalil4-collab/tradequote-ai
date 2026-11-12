@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, useLocation, useSearchParams, Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { Header } from '../components/Header';
 import { fetchCustomers, seedSampleCustomers } from '../services/customerService';
@@ -27,11 +27,15 @@ import {
 export const NewQuotePage: React.FC = () => {
   const { workspace } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
+  const [searchParams] = useSearchParams();
 
   // Data states
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [priceBookItems, setPriceBookItems] = useState<PriceBookItem[]>([]);
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
+  const [selectedCustomerId, setSelectedCustomerId] = useState<string>(() => {
+    return searchParams.get('customerId') || (location.state as any)?.customerId || '';
+  });
   const [quoteNumber, setQuoteNumber] = useState<string>('TQ-1001');
 
   // Form states
@@ -71,7 +75,13 @@ export const NewQuotePage: React.FC = () => {
         }
         if (custData && custData.length > 0) {
           setCustomers(custData);
-          setSelectedCustomerId(custData[0].id);
+          const initialCustId =
+            searchParams.get('customerId') || (location.state as any)?.customerId || '';
+          if (initialCustId && custData.some((c) => c.id === initialCustId)) {
+            setSelectedCustomerId(initialCustId);
+          } else {
+            setSelectedCustomerId((prev) => prev || custData![0].id);
+          }
         }
 
         // 3. Load Price Book items (auto-seed if empty)

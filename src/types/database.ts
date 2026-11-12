@@ -108,3 +108,11 @@ export interface Job {
   created_at: string;
 }
 
+export interface JobWithCustomer extends Job {
+  customer?: Customer | null;
+  customers?: Customer | null;
+  quote?: Quote | null;
+  quotes?: Quote | null;
+}
+
+

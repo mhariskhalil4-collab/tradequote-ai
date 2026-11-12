@@ -17,6 +17,7 @@ import {
   Plus,
   Sparkles,
   Receipt,
+  Calendar,
 } from 'lucide-react';
 
 export const DashboardPage: React.FC = () => {
@@ -26,6 +27,7 @@ export const DashboardPage: React.FC = () => {
   const [customerCount, setCustomerCount] = useState<number>(0);
   const [quoteCount, setQuoteCount] = useState<number>(0);
   const [invoiceCount, setInvoiceCount] = useState<number>(0);
+  const [jobCount, setJobCount] = useState<number>(0);
 
   useEffect(() => {
     if (!workspace?.id) return;
@@ -73,6 +75,17 @@ export const DashboardPage: React.FC = () => {
       .then(({ count }) => {
         if (count !== null) {
           setInvoiceCount(count);
+        }
+      });
+
+    // Fetch Jobs Count
+    supabase
+      .from('jobs')
+      .select('id', { count: 'exact', head: true })
+      .eq('workspace_id', workspace.id)
+      .then(({ count }) => {
+        if (count !== null) {
+          setJobCount(count);
         }
       });
   }, [workspace?.id]);
@@ -141,6 +154,15 @@ export const DashboardPage: React.FC = () => {
                 <span>Invoices</span>
               </Link>
               <Link
+                to="/jobs"
+                onClick={() => navigate('/jobs')}
+                className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-xl text-xs font-semibold shadow-sm transition cursor-pointer"
+                title="Go to Jobs"
+              >
+                <Calendar className="w-3.5 h-3.5" />
+                <span>Jobs</span>
+              </Link>
+              <Link
                 to="/price-book"
                 onClick={() => navigate('/price-book')}
                 className="inline-flex items-center space-x-1.5 px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-xl text-xs font-semibold shadow-sm transition cursor-pointer"
@@ -179,8 +201,8 @@ export const DashboardPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Overview Active Modules: 4 Active Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        {/* Overview Active Modules: 5 Active Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 mb-8">
           {/* Quotes Card */}
           <Link
             to="/quotes"
@@ -218,6 +240,27 @@ export const DashboardPage: React.FC = () => {
               </div>
             </div>
             <div className="flex items-center space-x-1 text-xs font-semibold text-indigo-600 group-hover:translate-x-0.5 transition">
+              <span>View</span>
+              <ArrowRight className="w-4 h-4 ml-0.5" />
+            </div>
+          </Link>
+
+          {/* Jobs Card */}
+          <Link
+            to="/jobs"
+            onClick={() => navigate('/jobs')}
+            className="bg-white p-5 rounded-xl border border-gray-200 shadow-sm hover:border-amber-500 hover:shadow-md transition group flex items-center justify-between cursor-pointer"
+          >
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 rounded-lg bg-amber-50 text-amber-600 flex items-center justify-center group-hover:bg-amber-600 group-hover:text-white transition">
+                <Calendar className="w-5 h-5" />
+              </div>
+              <div>
+                <p className="text-xs text-gray-500 font-medium">Jobs</p>
+                <p className="text-xl font-bold text-gray-900 mt-0.5">{jobCount}</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-1 text-xs font-semibold text-amber-600 group-hover:translate-x-0.5 transition">
               <span>View</span>
               <ArrowRight className="w-4 h-4 ml-0.5" />
             </div>
@@ -304,6 +347,14 @@ export const DashboardPage: React.FC = () => {
               <span>Invoices ({invoiceCount})</span>
             </Link>
             <Link
+              to="/jobs"
+              onClick={() => navigate('/jobs')}
+              className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm transition cursor-pointer"
+            >
+              <Calendar className="w-4 h-4 mr-2 text-amber-600" />
+              <span>Jobs ({jobCount})</span>
+            </Link>
+            <Link
               to="/price-book"
               onClick={() => navigate('/price-book')}
               className="inline-flex items-center px-4 py-2.5 rounded-xl text-xs font-semibold text-gray-700 bg-white border border-gray-300 hover:bg-gray-50 shadow-sm transition cursor-pointer"
@@ -337,6 +388,14 @@ export const DashboardPage: React.FC = () => {
             >
               <Receipt className="w-3.5 h-3.5 mr-1.5 text-indigo-600" />
               Invoices ({invoiceCount})
+            </Link>
+            <Link
+              to="/jobs"
+              onClick={() => navigate('/jobs')}
+              className="inline-flex items-center px-3.5 py-1.5 rounded-lg text-xs font-semibold bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition shadow-xs cursor-pointer"
+            >
+              <Calendar className="w-3.5 h-3.5 mr-1.5 text-amber-600" />
+              Jobs ({jobCount})
             </Link>
             <Link
               to="/quotes/new"

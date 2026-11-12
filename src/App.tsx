@@ -12,6 +12,7 @@ import { QuotesPage } from './pages/QuotesPage';
 import { NewQuotePage } from './pages/NewQuotePage';
 import { PublicQuotePage } from './pages/PublicQuotePage';
 import { InvoicesPage } from './pages/InvoicesPage';
+import { JobsPage } from './pages/JobsPage';
 
 export default function App() {
   return (
@@ -118,6 +119,18 @@ export default function App() {
           <Route
             path="/invoice"
             element={<Navigate to="/invoices" replace />}
+          />
+          <Route
+            path="/jobs"
+            element={
+              <ProtectedRoute requireWorkspace>
+                <JobsPage />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/job"
+            element={<Navigate to="/jobs" replace />}
           />
           {/* Public shareable quote route - no login needed */}
           <Route path="/q/:token" element={<PublicQuotePage />} />
