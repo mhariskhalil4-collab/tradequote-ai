@@ -21,94 +21,100 @@ export const Header: React.FC = () => {
 
   return (
     <header className="bg-white border-b border-gray-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
-        <div className="flex items-center space-x-6">
-          <Link to="/" className="flex items-center space-x-2 text-gray-900 group">
-            <div className="w-9 h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold shadow-sm group-hover:bg-blue-700 transition">
-              <Wrench className="w-5 h-5" />
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+        <div className="flex items-center space-x-2 sm:space-x-6">
+          <Link to="/" className="flex items-center space-x-2 text-gray-900 group flex-shrink-0">
+            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg bg-blue-600 flex items-center justify-center text-white font-bold shadow-xs group-hover:bg-blue-700 transition">
+              <Wrench className="w-4 h-4 sm:w-5 sm:h-5" />
             </div>
-            <span className="text-xl font-bold tracking-tight">TradeQuote AI</span>
+            <span className="text-base sm:text-xl font-bold tracking-tight">TradeQuote AI</span>
           </Link>
 
           {user && (
-            <nav className="flex items-center space-x-1 sm:space-x-2">
+            <nav className="flex items-center space-x-1 sm:space-x-1.5 overflow-x-auto py-1">
               <Link
                 to="/dashboard"
                 onClick={() => navigate('/dashboard')}
-                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                className={`inline-flex items-center space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer min-h-[36px] ${
                   isCurrent('/dashboard')
                     ? 'bg-blue-50 text-blue-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
+                title="Dashboard"
               >
-                <LayoutDashboard className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-gray-500" />
-                <span>Dashboard</span>
+                <LayoutDashboard className="w-4 h-4 text-gray-500 flex-shrink-0" />
+                <span className="hidden md:inline">Dashboard</span>
               </Link>
               <Link
                 to="/price-book"
                 onClick={() => navigate('/price-book')}
-                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                className={`inline-flex items-center space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer min-h-[36px] ${
                   isCurrent('/price-book')
                     ? 'bg-blue-50 text-blue-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
+                title="Price Book"
               >
-                <BookOpen className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" />
-                <span>Price Book</span>
+                <BookOpen className="w-4 h-4 text-blue-600 flex-shrink-0" />
+                <span className="hidden md:inline">Price Book</span>
               </Link>
               <Link
                 to="/customers"
                 onClick={() => navigate('/customers')}
-                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                className={`inline-flex items-center space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer min-h-[36px] ${
                   isCurrent('/customers')
                     ? 'bg-blue-50 text-blue-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
+                title="Customers"
               >
-                <Users className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-purple-600" />
-                <span>Customers</span>
+                <Users className="w-4 h-4 text-purple-600 flex-shrink-0" />
+                <span className="hidden md:inline">Customers</span>
               </Link>
               <Link
                 to="/quotes"
                 onClick={() => navigate('/quotes')}
-                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                className={`inline-flex items-center space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer min-h-[36px] ${
                   location.pathname.startsWith('/quote')
                     ? 'bg-blue-50 text-blue-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
+                title="Quotes"
               >
-                <FileText className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-600" />
-                <span>Quotes</span>
+                <FileText className="w-4 h-4 text-emerald-600 flex-shrink-0" />
+                <span className="hidden md:inline">Quotes</span>
               </Link>
               <Link
                 to="/invoices"
                 onClick={() => navigate('/invoices')}
-                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                className={`inline-flex items-center space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer min-h-[36px] ${
                   location.pathname.startsWith('/invoice')
                     ? 'bg-blue-50 text-blue-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
+                title="Invoices"
               >
-                <Receipt className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-indigo-600" />
-                <span>Invoices</span>
+                <Receipt className="w-4 h-4 text-indigo-600 flex-shrink-0" />
+                <span className="hidden md:inline">Invoices</span>
               </Link>
               <Link
                 to="/jobs"
                 onClick={() => navigate('/jobs')}
-                className={`inline-flex items-center space-x-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
+                className={`inline-flex items-center space-x-1.5 px-2 sm:px-2.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer min-h-[36px] ${
                   location.pathname.startsWith('/job')
                     ? 'bg-blue-50 text-blue-700'
                     : 'text-gray-600 hover:text-gray-900 hover:bg-gray-100'
                 }`}
+                title="Jobs"
               >
-                <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-600" />
-                <span>Jobs</span>
+                <Calendar className="w-4 h-4 text-amber-600 flex-shrink-0" />
+                <span className="hidden md:inline">Jobs</span>
               </Link>
             </nav>
           )}
         </div>
 
-        <div className="flex items-center space-x-3">
+        <div className="flex items-center space-x-2 sm:space-x-3 flex-shrink-0">
           {user ? (
             <>
               {workspace && (
@@ -134,23 +140,23 @@ export const Header: React.FC = () => {
               </button>
             </>
           ) : (
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-1.5 sm:space-x-2">
               <Link
                 to="/demo"
-                className="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 hover:bg-amber-100 rounded-md transition shadow-xs"
+                className="inline-flex items-center space-x-1 px-2 sm:px-3 py-1.5 text-xs font-semibold text-amber-900 bg-amber-50 border border-amber-300 hover:bg-amber-100 rounded-lg transition shadow-xs"
               >
-                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
-                <span>Live Demo</span>
+                <Sparkles className="w-3.5 h-3.5 text-amber-600 flex-shrink-0" />
+                <span>Demo</span>
               </Link>
               <Link
                 to="/login"
-                className="px-3 py-1.5 text-xs sm:text-sm font-medium text-gray-700 hover:text-gray-900 transition"
+                className="px-2 sm:px-3 py-1.5 text-xs sm:text-sm font-medium text-gray-700 hover:text-gray-900 transition"
               >
                 Log In
               </Link>
               <Link
                 to="/signup"
-                className="px-3.5 py-1.5 text-xs sm:text-sm font-medium text-white bg-blue-600 rounded-md hover:bg-blue-700 transition shadow-sm"
+                className="px-2.5 sm:px-3.5 py-1.5 text-xs sm:text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition shadow-xs flex-shrink-0"
               >
                 Sign Up
               </Link>
