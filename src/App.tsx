@@ -13,6 +13,7 @@ import { NewQuotePage } from './pages/NewQuotePage';
 import { PublicQuotePage } from './pages/PublicQuotePage';
 import { InvoicesPage } from './pages/InvoicesPage';
 import { JobsPage } from './pages/JobsPage';
+import { DemoPage } from './pages/DemoPage';
 
 export default function App() {
   return (
@@ -134,6 +135,11 @@ export default function App() {
           />
           {/* Public shareable quote route - no login needed */}
           <Route path="/q/:token" element={<PublicQuotePage />} />
+
+          {/* Public read-only demo workspace - no login needed */}
+          <Route path="/demo" element={<DemoPage />} />
+          <Route path="/demo/:section" element={<DemoPage />} />
+
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </AuthProvider>

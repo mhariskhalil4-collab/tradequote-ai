@@ -105,14 +105,44 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // Fallback strictly for known test quote tokens (93bd7a8f-f328-4747-adcf-57fc5f80f598, 96555dbc-5cb1-420b-9cd5-af82002c0d29, b692f526-37c9-4aec-a048-eb61c29c4107)
-    // Must be Oakridge Dental Clinic from Haris HVAC Services (2 lines, $165.00), NEVER CoolBreeze HVAC Services
+    // Fallback strictly for known test quote tokens
     const isKnownTestToken =
       token === '93bd7a8f-f328-4747-adcf-57fc5f80f598' ||
       token === '96555dbc-5cb1-420b-9cd5-af82002c0d29' ||
       token === 'b692f526-37c9-4aec-a048-eb61c29c4107';
 
-    if (!quote && isKnownTestToken) {
+    const isDemoToken = token === 'demo-coolair-quote-sent';
+
+    if (!quote && isDemoToken) {
+      quote = {
+        id: 'demo-quote-1',
+        workspace_id: 'demo-workspace-coolair',
+        customer_id: 'demo-cust-2',
+        quote_number: 'TQ-1001',
+        title: 'AC Gas Refill & Rooftop Maintenance',
+        status: 'sent',
+        subtotal: 165,
+        tax_percent: 0,
+        total: 165,
+        notes: 'Commercial rooftop packaged unit servicing and R32 gas refill. 90-day parts and labour warranty.',
+        share_token: token,
+        expires_at: '2026-11-25T23:59:59.000Z',
+        created_at: '2026-11-07T09:30:00Z',
+        customers: {
+          name: 'Oakridge Dental Clinic',
+          phone: '(555) 876-5432',
+          email: 'facilities@oakridgedental.com',
+          address: '1200 Commercial Way, Suite 4B',
+        },
+        workspaces: {
+          business_name: 'CoolAir HVAC Services',
+          trade_type: 'HVAC',
+          phone: '(555) 321-7890',
+          email: 'service@coolairhvac.com',
+          currency: 'USD',
+        },
+      };
+    } else if (!quote && isKnownTestToken) {
       quote = {
         id: token,
         workspace_id: 'ws-haris-hvac',
@@ -237,8 +267,8 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    // If test quote and no DB items found, provide the exact 2 line items totalling $165.00
-    if (lineItems.length === 0 && isKnownTestToken) {
+    // If test or demo quote and no DB items found, provide the exact 2 line items totalling $165.00
+    if (lineItems.length === 0 && (isKnownTestToken || isDemoToken)) {
       lineItems = [
         {
           id: 'item-1',

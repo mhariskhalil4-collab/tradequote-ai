@@ -740,7 +740,70 @@ export async function fetchPublicQuote(
       return { data: formatted, error: null };
     }
 
-    // 3. Fallback for shared test quote tokens (93bd7a8f-f328-4747-adcf-57fc5f80f598, 96555dbc-5cb1-420b-9cd5-af82002c0d29, b692f526-37c9-4aec-a048-eb61c29c4107)
+    // 3. Fallback for CoolAir HVAC Services demo quote token
+    if (cleanToken === 'demo-coolair-quote-sent') {
+      let savedStatus: QuoteStatus = 'sent';
+      try {
+        const stored = localStorage.getItem(`tq_status_${cleanToken}`) as QuoteStatus;
+        if (stored) savedStatus = stored;
+      } catch {}
+
+      return {
+        data: {
+          id: 'demo-quote-1',
+          quote_number: 'TQ-1001',
+          title: 'AC Gas Refill & Rooftop Maintenance',
+          status: savedStatus,
+          subtotal: 165,
+          tax_percent: 0,
+          total: 165,
+          notes: 'Commercial rooftop packaged unit servicing and R32 gas refill. 90-day parts and labour warranty.',
+          expires_at: '2026-11-25T23:59:59.000Z',
+          created_at: '2026-11-07T09:30:00Z',
+          is_expired: false,
+          customer: {
+            name: 'Oakridge Dental Clinic',
+            phone: '(555) 876-5432',
+            email: 'facilities@oakridgedental.com',
+            address: '1200 Commercial Way, Suite 4B',
+          },
+          workspace: {
+            business_name: 'CoolAir HVAC Services',
+            trade_type: 'HVAC',
+            phone: '(555) 321-7890',
+            email: 'service@coolairhvac.com',
+            currency: 'USD',
+          },
+          line_items: [
+            {
+              id: 'demo-li-1-1',
+              quote_id: 'demo-quote-1',
+              workspace_id: 'demo-workspace-coolair',
+              price_book_item_id: 'demo-pbi-1',
+              description: 'AC General Service',
+              quantity: 1,
+              unit: 'job',
+              unit_price: 45,
+              line_total: 45,
+            },
+            {
+              id: 'demo-li-1-2',
+              quote_id: 'demo-quote-1',
+              workspace_id: 'demo-workspace-coolair',
+              price_book_item_id: 'demo-pbi-2',
+              description: 'AC Gas Refill R32',
+              quantity: 1,
+              unit: 'job',
+              unit_price: 120,
+              line_total: 120,
+            },
+          ],
+        },
+        error: null,
+      };
+    }
+
+    // 4. Fallback for shared test quote tokens (93bd7a8f-f328-4747-adcf-57fc5f80f598, 96555dbc-5cb1-420b-9cd5-af82002c0d29, b692f526-37c9-4aec-a048-eb61c29c4107)
     const isTestToken =
       cleanToken === '93bd7a8f-f328-4747-adcf-57fc5f80f598' ||
       cleanToken === '96555dbc-5cb1-420b-9cd5-af82002c0d29' ||

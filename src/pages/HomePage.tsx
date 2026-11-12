@@ -39,10 +39,17 @@ export const HomePage: React.FC = () => {
               <ArrowRight className="w-4 h-4 ml-2" />
             </Link>
             <Link
+              to="/demo"
+              className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 border border-amber-300 rounded-xl shadow-sm text-base font-semibold text-amber-900 bg-amber-50 hover:bg-amber-100 transition"
+            >
+              <Sparkles className="w-4 h-4 mr-2 text-amber-600" />
+              <span>Explore Live Demo</span>
+            </Link>
+            <Link
               to="/login"
               className="w-full sm:w-auto inline-flex items-center justify-center px-6 py-3.5 border border-gray-300 rounded-xl shadow-sm text-base font-semibold text-gray-700 bg-white hover:bg-gray-50 transition"
             >
-              Sign In to Workspace
+              Sign In
             </Link>
           </div>
 

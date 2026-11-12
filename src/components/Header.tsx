@@ -1,7 +1,7 @@
 import React from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
-import { Wrench, LogOut, Building2, User as UserIcon, LayoutDashboard, BookOpen, Users, FileText, Receipt, Calendar } from 'lucide-react';
+import { Wrench, LogOut, Building2, User as UserIcon, LayoutDashboard, BookOpen, Users, FileText, Receipt, Calendar, Sparkles } from 'lucide-react';
 
 export const Header: React.FC = () => {
   const { user, workspace, signOut } = useAuth();
@@ -135,6 +135,13 @@ export const Header: React.FC = () => {
             </>
           ) : (
             <div className="flex items-center space-x-2">
+              <Link
+                to="/demo"
+                className="hidden sm:inline-flex items-center space-x-1.5 px-3 py-1.5 text-xs font-semibold text-amber-800 bg-amber-50 border border-amber-200 hover:bg-amber-100 rounded-md transition shadow-xs"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+                <span>Live Demo</span>
+              </Link>
               <Link
                 to="/login"
                 className="px-3 py-1.5 text-xs sm:text-sm font-medium text-gray-700 hover:text-gray-900 transition"
